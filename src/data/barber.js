@@ -3,6 +3,7 @@ export const barber = {
     name: 'BarberBook',
     location: 'Santiago, Chile',
     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Santiago%2C%20Chile',
+    bookingFee: 1000,
   },
   professional: {
     name: 'Matías',

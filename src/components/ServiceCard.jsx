@@ -1,8 +1,4 @@
-const currencyFormatter = new Intl.NumberFormat('es-CL', {
-  style: 'currency',
-  currency: 'CLP',
-  maximumFractionDigits: 0,
-})
+import { formatCurrency } from '../utils/formatters'
 
 function ServiceCard({ service, index }) {
   return (
@@ -17,7 +13,7 @@ function ServiceCard({ service, index }) {
         </div>
       </div>
       <div className="service-card__details">
-        <strong>{currencyFormatter.format(service.price)}</strong>
+        <strong>{formatCurrency(service.price)}</strong>
         <span>
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <circle cx="12" cy="12" r="9" />
