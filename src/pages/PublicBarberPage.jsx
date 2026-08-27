@@ -1,10 +1,32 @@
+import { useState } from 'react'
+import BookingFlow from '../components/booking/BookingFlow'
 import LocationLink from '../components/LocationLink'
 import ServiceCard from '../components/ServiceCard'
 import { barber } from '../data/barber'
 import PublicLayout from '../layouts/PublicLayout'
 
 function PublicBarberPage() {
+  const [isBooking, setIsBooking] = useState(false)
   const { business, professional, services } = barber
+
+  const changeView = (bookingIsOpen) => {
+    setIsBooking(bookingIsOpen)
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    })
+  }
+
+  if (isBooking) {
+    return (
+      <PublicLayout>
+        <BookingFlow
+          services={services}
+          bookingFee={business.bookingFee}
+          onExit={() => changeView(false)}
+        />
+      </PublicLayout>
+    )
+  }
 
   return (
     <PublicLayout>
@@ -19,12 +41,16 @@ function PublicBarberPage() {
               location={business.location}
               mapsUrl={business.mapsUrl}
             />
-            <a className="button button--primary" href="#servicios">
+            <button
+              className="button button--primary"
+              type="button"
+              onClick={() => changeView(true)}
+            >
               Reservar hora
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M5 12h14M14 7l5 5-5 5" />
               </svg>
-            </a>
+            </button>
           </div>
 
           <div className="profile-visual" aria-label="Identidad visual de Matías">
@@ -69,10 +95,10 @@ function PublicBarberPage() {
                 </svg>
               </span>
               <div>
-                <strong>Reservas online próximamente</strong>
+                <strong>Solicitudes sujetas a confirmación</strong>
                 <p>
-                  Esta primera versión presenta los servicios de Matías. El
-                  flujo completo de reservas se incorporará en la siguiente etapa.
+                  Matías revisará cada solicitud antes de confirmar la hora.
+                  Enviar una solicitud no bloquea ni confirma automáticamente.
                 </p>
               </div>
             </div>

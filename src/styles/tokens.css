@@ -9,6 +9,9 @@
   --color-accent: #a85f3f;
   --color-accent-hover: #8f4d32;
   --color-accent-text: #fffaf5;
+  --color-warning: #8a5a18;
+  --color-warning-surface: #f3e5c8;
+  --color-error: #a23d34;
   --color-dark-panel: #22201e;
   --color-dark-panel-text: #f8f1e7;
   --color-header: rgba(245, 240, 232, 0.88);
@@ -35,6 +38,9 @@
   --color-accent: #d18460;
   --color-accent-hover: #e09673;
   --color-accent-text: #1d1714;
+  --color-warning: #e2ad59;
+  --color-warning-surface: #392f21;
+  --color-error: #f08d82;
   --color-dark-panel: #d9c4ad;
   --color-dark-panel-text: #211b17;
   --color-header: rgba(23, 22, 20, 0.88);
