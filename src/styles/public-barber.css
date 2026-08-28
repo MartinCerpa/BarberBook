@@ -28,6 +28,24 @@
   min-height: 4.5rem;
 }
 
+.site-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.professional-access {
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-decoration: none;
+  transition: color var(--transition);
+}
+
+.professional-access:hover {
+  color: var(--color-accent);
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -81,6 +99,7 @@
 }
 
 .theme-toggle:focus-visible,
+.professional-access:focus-visible,
 .button:focus-visible,
 .location-link:focus-visible,
 .booking-note a:focus-visible,
@@ -568,6 +587,10 @@
 }
 
 @media (max-width: 25rem) {
+  .professional-access__suffix {
+    display: none;
+  }
+
   .theme-toggle span {
     position: absolute;
     width: 1px;
