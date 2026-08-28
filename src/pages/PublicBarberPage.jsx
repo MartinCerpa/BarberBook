@@ -1,15 +1,42 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import BookingFlow from '../components/booking/BookingFlow'
 import LocationLink from '../components/LocationLink'
-import ServiceCard from '../components/ServiceCard'
 import { barber } from '../data/barber'
 import PublicLayout from '../layouts/PublicLayout'
 
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
+      <path d="m9 14 2 2 4-4" />
+    </svg>
+  )
+}
+
 function PublicBarberPage() {
   const [isBooking, setIsBooking] = useState(false)
+  const [showMobileCta, setShowMobileCta] = useState(false)
+  const primaryCtaRef = useRef(null)
   const { business, professional, services } = barber
 
+  useEffect(() => {
+    const primaryCta = primaryCtaRef.current
+
+    if (isBooking || !primaryCta || !window.IntersectionObserver) {
+      return undefined
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowMobileCta(!entry.isIntersecting),
+      { threshold: 0.35 },
+    )
+
+    observer.observe(primaryCta)
+    return () => observer.disconnect()
+  }, [isBooking])
+
   const changeView = (bookingIsOpen) => {
+    setShowMobileCta(false)
     setIsBooking(bookingIsOpen)
     requestAnimationFrame(() => {
       window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -37,20 +64,52 @@ function PublicBarberPage() {
             <h1>{professional.name}</h1>
             <p className="hero-copy__role">{professional.role}</p>
             <p className="hero-copy__bio">{professional.bio}</p>
-            <LocationLink
-              location={business.location}
-              mapsUrl={business.mapsUrl}
-            />
+
             <button
-              className="button button--primary"
+              className="button button--primary booking-cta"
               type="button"
               onClick={() => changeView(true)}
+              ref={primaryCtaRef}
             >
-              Reservar hora
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+              <span className="booking-cta__icon">
+                <CalendarIcon />
+              </span>
+              <span className="booking-cta__copy">
+                <strong>Reservar ahora</strong>
+                <small>Elige servicio, fecha y hora</small>
+              </span>
+              <svg
+                className="booking-cta__arrow"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
                 <path d="M5 12h14M14 7l5 5-5 5" />
               </svg>
             </button>
+
+            <p className="booking-assurance">
+              <span aria-hidden="true">✓</span>
+              Sin pago online. Matías confirma personalmente cada solicitud.
+            </p>
+
+            <div className="profile-facts">
+              <LocationLink
+                location={business.location}
+                mapsUrl={business.mapsUrl}
+              />
+              <div className="profile-fact">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <path d="M12 7v5l3 2" />
+                </svg>
+                <div>
+                  <span>Horario general</span>
+                  <strong>
+                    {business.openingHours.days} · {business.openingHours.time}
+                  </strong>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="profile-visual" aria-label="Identidad visual de Matías">
@@ -60,55 +119,23 @@ function PublicBarberPage() {
               M
             </span>
             <div className="profile-visual__caption">
-              <span>Corte</span>
-              <span>Barba</span>
-              <span>Detalle</span>
+              <span>Precisión</span>
+              <span>Cercanía</span>
+              <span>Estilo</span>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="services-section" id="servicios">
-        <div className="container">
-          <div className="section-heading">
-            <div>
-              <p className="eyebrow">Servicios</p>
-              <h2>Elige tu próxima experiencia</h2>
-            </div>
-            <p>
-              Cada servicio se adapta a tu estilo. La duración es aproximada y
-              se confirma antes de la reserva.
-            </p>
-          </div>
-
-          <div className="services-grid">
-            {services.map((service, index) => (
-              <ServiceCard key={service.id} service={service} index={index} />
-            ))}
-          </div>
-
-          <div className="booking-note">
-            <div>
-              <span className="booking-note__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" />
-                </svg>
-              </span>
-              <div>
-                <strong>Solicitudes sujetas a confirmación</strong>
-                <p>
-                  Matías revisará cada solicitud antes de confirmar la hora.
-                  Enviar una solicitud no bloquea ni confirma automáticamente.
-                </p>
-              </div>
-            </div>
-            <a href={business.mapsUrl} target="_blank" rel="noreferrer">
-              Cómo llegar
-              <span aria-hidden="true">↗</span>
-            </a>
-          </div>
+      {showMobileCta && (
+        <div className="mobile-booking-bar">
+          <button type="button" onClick={() => changeView(true)}>
+            <CalendarIcon />
+            <span>Reservar ahora</span>
+            <span aria-hidden="true">→</span>
+          </button>
         </div>
-      </section>
+      )}
     </PublicLayout>
   )
 }

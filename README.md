@@ -21,10 +21,11 @@ npm run dev
 ## Alcance actual
 
 - Perfil público de un barbero.
-- Catálogo de servicios basado en datos simulados.
+- Perfil público enfocado en confianza y conversión.
 - Selector de tema persistente.
 - Diseño mobile-first.
 - Flujo público de solicitud de reserva por pasos.
+- Selección de servicios dentro del flujo de reserva.
 - Validación de nombre y teléfono.
 - Disponibilidad y estados de horario simulados.
 - Resumen transparente del precio y cargo de reserva.
