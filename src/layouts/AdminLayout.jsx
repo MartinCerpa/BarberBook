@@ -1,0 +1,59 @@
+import Brand from '../components/Brand'
+import Sidebar from '../components/admin/Sidebar'
+import ThemeToggle from '../components/ThemeToggle'
+
+const sectionLabels = {
+  dashboard: 'Dashboard',
+  requests: 'Solicitudes',
+  schedule: 'Agenda',
+  clients: 'Clientes',
+  settings: 'Configuración',
+}
+
+function AdminLayout({ activeSection, children }) {
+  return (
+    <div className="admin-shell">
+      <aside className="admin-sidebar">
+        <div>
+          <Brand
+            href="#/panel/dashboard"
+            label="BarberBook, ir al dashboard"
+          />
+          <p className="admin-sidebar__caption">Espacio profesional</p>
+        </div>
+
+        <Sidebar activeSection={activeSection} />
+
+        <div className="admin-sidebar__footer">
+          <span className="admin-avatar" aria-hidden="true">M</span>
+          <div>
+            <strong>Matías</strong>
+            <span>Barbero independiente</span>
+          </div>
+          <a href="#inicio">Ver perfil público</a>
+        </div>
+      </aside>
+
+      <div className="admin-workspace">
+        <header className="admin-header">
+          <div>
+            <span>Panel del barbero</span>
+            <strong>{sectionLabels[activeSection]}</strong>
+          </div>
+          <div className="admin-header__actions">
+            <a className="admin-public-link" href="#inicio">
+              Ver perfil público
+            </a>
+            <ThemeToggle />
+          </div>
+        </header>
+
+        <main className="admin-main">{children}</main>
+      </div>
+
+      <Sidebar activeSection={activeSection} mobile />
+    </div>
+  )
+}
+
+export default AdminLayout

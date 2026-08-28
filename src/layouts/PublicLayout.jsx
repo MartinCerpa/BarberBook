@@ -7,7 +7,12 @@ function PublicLayout({ children }) {
       <header className="site-header">
         <div className="container site-header__content">
           <Brand />
-          <ThemeToggle />
+          <div className="site-header__actions">
+            <a className="professional-access" href="#/panel/dashboard">
+              Panel<span className="professional-access__suffix"> profesional</span>
+            </a>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       <main>{children}</main>

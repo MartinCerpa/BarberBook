@@ -26,7 +26,7 @@ const toDateId = (date) => {
   return `${year}-${month}-${day}`
 }
 
-export const getBookingDates = (totalDays = 7) => {
+export const getBookingDates = (totalDays = 14) => {
   const today = new Date()
   today.setHours(12, 0, 0, 0)
 
