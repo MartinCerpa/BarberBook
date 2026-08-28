@@ -1,6 +1,6 @@
-function Brand() {
+function Brand({ href = '#inicio', label = 'BarberBook, volver al inicio' }) {
   return (
-    <a className="brand" href="#inicio" aria-label="BarberBook, volver al inicio">
+    <a className="brand" href={href} aria-label={label}>
       <span className="brand__mark" aria-hidden="true">
         BB
       </span>
