@@ -3,11 +3,11 @@ import Sidebar from '../components/admin/Sidebar'
 import ThemeToggle from '../components/ThemeToggle'
 
 const sectionLabels = {
-  dashboard: 'Dashboard',
+  dashboard: 'Inicio',
   requests: 'Solicitudes',
   schedule: 'Agenda',
   clients: 'Clientes',
-  settings: 'Configuración',
+  settings: 'Ajustes',
 }
 
 function AdminLayout({ activeSection, children }) {
@@ -17,7 +17,7 @@ function AdminLayout({ activeSection, children }) {
         <div>
           <Brand
             href="#/panel/dashboard"
-            label="BarberBook, ir al dashboard"
+            label="BarberBook, ir al inicio del panel"
           />
           <p className="admin-sidebar__caption">Espacio profesional</p>
         </div>

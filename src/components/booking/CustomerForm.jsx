@@ -1,18 +1,37 @@
 import { useState } from 'react'
 
+const PHONE_PREFIX = '+56 9'
+
+const getSubscriberDigits = (phone) => {
+  const digits = phone.replace(/\D/g, '')
+
+  if (digits.startsWith('569')) {
+    return digits.slice(3, 11)
+  }
+
+  if (digits.length === 9 && digits.startsWith('9')) {
+    return digits.slice(1)
+  }
+
+  return digits.slice(0, 8)
+}
+
+const formatSubscriberDigits = (digits) =>
+  [digits.slice(0, 4), digits.slice(4, 8)].filter(Boolean).join(' ')
+
+const formatPhone = (digits) =>
+  digits ? `${PHONE_PREFIX} ${formatSubscriberDigits(digits)}` : ''
+
 const validateCustomer = ({ name, phone }) => {
   const errors = {}
-  const phoneDigits = phone.replace(/\D/g, '')
-  const isChileanMobile =
-    (phoneDigits.length === 9 && phoneDigits.startsWith('9')) ||
-    (phoneDigits.length === 11 && phoneDigits.startsWith('569'))
+  const isChileanMobile = getSubscriberDigits(phone).length === 8
 
   if (name.trim().length < 2) {
     errors.name = 'Ingresa un nombre de al menos 2 caracteres.'
   }
 
   if (!isChileanMobile) {
-    errors.phone = 'Ingresa un celular chileno válido, por ejemplo +56 9 1234 5678.'
+    errors.phone = 'Completa los 8 dígitos restantes de tu celular.'
   }
 
   return errors
@@ -20,6 +39,8 @@ const validateCustomer = ({ name, phone }) => {
 
 function CustomerForm({ customer, onChange, onBack, onNext }) {
   const [errors, setErrors] = useState({})
+  const subscriberDigits = getSubscriberDigits(customer.phone)
+  const isPhoneComplete = subscriberDigits.length === 8
 
   const updateField = (field, value) => {
     onChange({ ...customer, [field]: value })
@@ -27,6 +48,11 @@ function CustomerForm({ customer, onChange, onBack, onNext }) {
     if (errors[field]) {
       setErrors((currentErrors) => ({ ...currentErrors, [field]: undefined }))
     }
+  }
+
+  const updatePhone = (value) => {
+    const nextDigits = getSubscriberDigits(value)
+    updateField('phone', formatPhone(nextDigits))
   }
 
   const handleSubmit = (event) => {
@@ -70,21 +96,27 @@ function CustomerForm({ customer, onChange, onBack, onNext }) {
       </div>
 
       <div className="form-field">
-        <label htmlFor="customer-phone">Teléfono</label>
-        <input
-          id="customer-phone"
-          name="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          value={customer.phone}
-          onChange={(event) => updateField('phone', event.target.value)}
-          placeholder="+56 9 1234 5678"
-          aria-invalid={Boolean(errors.phone)}
-          aria-describedby={errors.phone ? 'customer-phone-error' : 'customer-phone-help'}
-        />
+        <label id="customer-phone-label" htmlFor="customer-phone">Teléfono</label>
+        <div className="phone-input">
+          <span className="phone-input__prefix" id="customer-phone-prefix">
+            {PHONE_PREFIX}
+          </span>
+          <input
+            id="customer-phone"
+            name="phone"
+            type="tel"
+            inputMode="numeric"
+            autoComplete="tel-national"
+            value={formatSubscriberDigits(subscriberDigits)}
+            onChange={(event) => updatePhone(event.target.value)}
+            placeholder="1234 5678"
+            aria-invalid={Boolean(errors.phone)}
+            aria-labelledby="customer-phone-label customer-phone-prefix"
+            aria-describedby={`customer-phone-help${errors.phone ? ' customer-phone-error' : ''}`}
+          />
+        </div>
         <span className="form-help" id="customer-phone-help">
-          Puedes escribirlo con o sin espacios.
+          Ingresa los 8 dígitos restantes. {subscriberDigits.length}/8
         </span>
         {errors.phone && (
           <span className="form-error" id="customer-phone-error" role="alert">
@@ -97,7 +129,11 @@ function CustomerForm({ customer, onChange, onBack, onNext }) {
         <button className="button button--secondary" type="button" onClick={onBack}>
           Volver
         </button>
-        <button className="button button--primary" type="submit">
+        <button
+          className="button button--primary"
+          type="submit"
+          disabled={!isPhoneComplete}
+        >
           Revisar solicitud
         </button>
       </div>

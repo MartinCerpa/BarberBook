@@ -35,6 +35,37 @@ function PublicBarberPage() {
     return () => observer.disconnect()
   }, [isBooking])
 
+  useEffect(() => {
+    if (isBooking) {
+      return undefined
+    }
+
+    const revealElements = document.querySelectorAll('[data-reveal]')
+
+    if (!window.IntersectionObserver) {
+      revealElements.forEach((element) => element.classList.add('is-visible'))
+      return undefined
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible')
+            observer.unobserve(entry.target)
+          }
+        })
+      },
+      {
+        threshold: 0.12,
+        rootMargin: '0px 0px -8% 0px',
+      },
+    )
+
+    revealElements.forEach((element) => observer.observe(element))
+    return () => observer.disconnect()
+  }, [isBooking])
+
   const changeView = (bookingIsOpen) => {
     setShowMobileCta(false)
     setIsBooking(bookingIsOpen)
@@ -60,16 +91,32 @@ function PublicBarberPage() {
       <section className="hero-section" id="inicio">
         <div className="container hero-grid">
           <div className="hero-copy">
-            <p className="eyebrow">Perfil profesional</p>
-            <h1>{professional.name}</h1>
-            <p className="hero-copy__role">{professional.role}</p>
-            <p className="hero-copy__bio">{professional.bio}</p>
+            <p className="eyebrow" data-reveal data-reveal-order="1">
+              Perfil profesional
+            </p>
+            <h1 data-reveal data-reveal-order="2">{professional.name}</h1>
+            <p
+              className="hero-copy__role"
+              data-reveal
+              data-reveal-order="3"
+            >
+              {professional.role}
+            </p>
+            <p
+              className="hero-copy__bio"
+              data-reveal
+              data-reveal-order="3"
+            >
+              {professional.bio}
+            </p>
 
             <button
               className="button button--primary booking-cta"
               type="button"
               onClick={() => changeView(true)}
               ref={primaryCtaRef}
+              data-reveal
+              data-reveal-order="4"
             >
               <span className="booking-cta__icon">
                 <CalendarIcon />
@@ -87,17 +134,31 @@ function PublicBarberPage() {
               </svg>
             </button>
 
-            <p className="booking-assurance">
+            <p
+              className="booking-assurance"
+              data-reveal
+              data-reveal-order="5"
+            >
               <span aria-hidden="true">✓</span>
               Sin pago online. Matías confirma personalmente cada solicitud.
             </p>
 
             <div className="profile-facts">
-              <LocationLink
-                location={business.location}
-                mapsUrl={business.mapsUrl}
-              />
-              <div className="profile-fact">
+              <div
+                className="profile-location"
+                data-reveal
+                data-reveal-order="6"
+              >
+                <LocationLink
+                  location={business.location}
+                  mapsUrl={business.mapsUrl}
+                />
+              </div>
+              <div
+                className="profile-fact"
+                data-reveal
+                data-reveal-order="7"
+              >
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                   <circle cx="12" cy="12" r="9" />
                   <path d="M12 7v5l3 2" />
@@ -112,7 +173,12 @@ function PublicBarberPage() {
             </div>
           </div>
 
-          <div className="profile-visual" aria-label="Identidad visual de Matías">
+          <div
+            className="profile-visual"
+            aria-label="Identidad visual de Matías"
+            data-reveal
+            data-reveal-order="3"
+          >
             <div className="profile-visual__lines" aria-hidden="true" />
             <span className="profile-visual__label">Estilo con intención</span>
             <span className="profile-visual__monogram" aria-hidden="true">

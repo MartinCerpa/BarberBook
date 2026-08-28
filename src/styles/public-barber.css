@@ -140,6 +140,50 @@
   gap: 3rem;
 }
 
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(1rem);
+  transition:
+    opacity 620ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+[data-reveal-order='1'] {
+  --reveal-delay: 40ms;
+}
+
+[data-reveal-order='2'] {
+  --reveal-delay: 90ms;
+}
+
+[data-reveal-order='3'] {
+  --reveal-delay: 140ms;
+}
+
+[data-reveal-order='4'] {
+  --reveal-delay: 190ms;
+}
+
+[data-reveal-order='5'] {
+  --reveal-delay: 235ms;
+}
+
+[data-reveal-order='6'] {
+  --reveal-delay: 280ms;
+}
+
+[data-reveal-order='7'] {
+  --reveal-delay: 325ms;
+}
+
+[data-reveal].is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  will-change: auto;
+}
+
 .hero-copy {
   align-self: center;
 }
@@ -191,9 +235,9 @@
   text-decoration: none;
   cursor: pointer;
   transition:
-    background-color var(--transition),
-    transform var(--transition),
-    box-shadow var(--transition);
+    background-color 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms ease;
 }
 
 .button svg {
@@ -215,6 +259,10 @@
 .button--primary:hover {
   background: var(--color-accent-hover);
   transform: translateY(-2px);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(0) scale(0.985);
 }
 
 .button:disabled {
@@ -249,6 +297,9 @@
   place-items: center;
   border-radius: 0.8rem;
   background: color-mix(in srgb, var(--color-accent-text) 16%, transparent);
+  transition:
+    background-color 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .booking-cta__icon svg {
@@ -284,6 +335,11 @@
   transform: translateX(0.2rem);
 }
 
+.booking-cta:hover .booking-cta__icon {
+  background: color-mix(in srgb, var(--color-accent-text) 23%, transparent);
+  transform: rotate(-3deg) scale(1.04);
+}
+
 .booking-assurance {
   display: flex;
   max-width: 29rem;
@@ -317,6 +373,11 @@
   border-top: 1px solid var(--color-border);
 }
 
+.profile-location {
+  display: flex;
+  align-items: center;
+}
+
 .location-link,
 .profile-fact {
   display: grid;
@@ -326,6 +387,9 @@
   min-height: 2.65rem;
   color: var(--color-text-muted);
   font-size: 0.8rem;
+  transition:
+    color 220ms ease,
+    transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .location-link {
@@ -377,6 +441,12 @@
   font-size: 0.78rem;
 }
 
+.location-link:hover,
+.profile-fact:hover {
+  color: var(--color-text);
+  transform: translateX(0.18rem);
+}
+
 .profile-visual {
   position: relative;
   display: flex;
@@ -390,6 +460,17 @@
   box-shadow: var(--shadow-card);
   color: var(--color-dark-panel-text);
   isolation: isolate;
+  transition:
+    transform 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 420ms ease;
+}
+
+.profile-visual[data-reveal] {
+  transform: translateY(1.25rem) scale(0.985);
+}
+
+.profile-visual[data-reveal].is-visible {
+  transform: translateY(0) scale(1);
 }
 
 .profile-visual::before {
@@ -502,6 +583,14 @@
     color: var(--color-accent-text);
     cursor: pointer;
     font-weight: 850;
+    transition:
+      background-color 220ms ease,
+      transform 180ms ease,
+      box-shadow 220ms ease;
+  }
+
+  .mobile-booking-bar button:active {
+    transform: scale(0.985);
   }
 
   .mobile-booking-bar svg {
@@ -563,6 +652,20 @@
 
   .profile-visual {
     min-height: 36rem;
+  }
+
+  .profile-visual[data-reveal].is-visible:hover {
+    box-shadow: 0 28px 70px rgba(0, 0, 0, 0.2);
+    transform: translateY(-0.25rem) scale(1.005);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal],
+  .profile-visual[data-reveal] {
+    opacity: 1;
+    transform: none;
+    transition: none;
   }
 }
 
