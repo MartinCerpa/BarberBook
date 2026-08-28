@@ -1,8 +1,6 @@
 import { formatBookingDate, formatCurrency } from '../../utils/formatters'
 
-function BookingSummary({ booking, service, bookingFee, onBack, onSubmit }) {
-  const total = service.price + bookingFee
-
+function BookingSummary({ booking, service, onBack, onSubmit }) {
   return (
     <div className="booking-step">
       <div className="booking-step__heading">
@@ -36,20 +34,18 @@ function BookingSummary({ booking, service, bookingFee, onBack, onSubmit }) {
         </dl>
 
         <div className="price-summary">
-          <h2>Detalle del precio</h2>
+          <h2>Detalle del servicio</h2>
           <div>
             <span>{service.name}</span>
             <strong>{formatCurrency(service.price)}</strong>
           </div>
-          <div>
-            <span>Cargo de reserva BarberBook</span>
-            <strong>{formatCurrency(bookingFee)}</strong>
-          </div>
           <div className="price-summary__total">
             <span>Total</span>
-            <strong>{formatCurrency(total)}</strong>
+            <strong>{formatCurrency(service.price)}</strong>
           </div>
-          <p>El pago todavía no se procesa desde BarberBook.</p>
+          <p className="price-summary__notice">
+            Reserva gratuita. El pago se realiza directamente en la barbería.
+          </p>
         </div>
       </div>
 

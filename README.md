@@ -1,7 +1,7 @@
 # BarberBook
 
-Frontend inicial de BarberBook, un producto de reservas y gestión para barberías.
-El prototipo presenta el perfil público de un barbero y permite recorrer una
+Frontend inicial de BarberBook, un producto SaaS de reservas y gestión para barberías.
+El prototipo presenta el perfil público de un profesional y permite recorrer una
 solicitud de reserva completa con datos simulados.
 
 ## Ejecutar el proyecto
@@ -28,7 +28,7 @@ npm run dev
 - Selección de servicios dentro del flujo de reserva.
 - Validación de nombre y teléfono.
 - Disponibilidad y estados de horario simulados.
-- Resumen transparente del precio y cargo de reserva.
+- Resumen transparente del precio del servicio y reserva gratuita.
 
 Todavía no incluye backend, persistencia, autenticación, pagos ni confirmación
 real de reservas.

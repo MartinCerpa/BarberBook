@@ -77,11 +77,7 @@ function PublicBarberPage() {
   if (isBooking) {
     return (
       <PublicLayout>
-        <BookingFlow
-          services={services}
-          bookingFee={business.bookingFee}
-          onExit={() => changeView(false)}
-        />
+        <BookingFlow services={services} onExit={() => changeView(false)} />
       </PublicLayout>
     )
   }
@@ -140,7 +136,7 @@ function PublicBarberPage() {
               data-reveal-order="5"
             >
               <span aria-hidden="true">✓</span>
-              Sin pago online. Matías confirma personalmente cada solicitud.
+              Reserva gratuita. El servicio se paga directamente en la barbería.
             </p>
 
             <div className="profile-facts">

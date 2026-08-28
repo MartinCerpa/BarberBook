@@ -18,7 +18,7 @@ const initialBooking = {
   },
 }
 
-function BookingFlow({ services, bookingFee, onExit }) {
+function BookingFlow({ services, onExit }) {
   const [currentStep, setCurrentStep] = useState(0)
   const [booking, setBooking] = useState(initialBooking)
   const dates = useMemo(() => getBookingDates(), [])
@@ -133,7 +133,6 @@ function BookingFlow({ services, bookingFee, onExit }) {
             <BookingSummary
               booking={booking}
               service={selectedService}
-              bookingFee={bookingFee}
               onBack={() => goToStep(3)}
               onSubmit={() => goToStep(5)}
             />

@@ -7,7 +7,6 @@ export const barber = {
       days: 'Lunes a sábado',
       time: '10:00 a 19:00',
     },
-    bookingFee: 1000,
   },
   professional: {
     name: 'Matías',

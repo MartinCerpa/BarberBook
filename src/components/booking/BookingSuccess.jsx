@@ -31,6 +31,10 @@ function BookingSuccess({ booking, service, onReturn }) {
         </div>
       </dl>
 
+      <p className="booking-success__payment-note">
+        Reserva gratuita. El pago se realiza directamente en la barbería.
+      </p>
+
       <button className="button button--primary" type="button" onClick={onReturn}>
         Volver al perfil
       </button>
