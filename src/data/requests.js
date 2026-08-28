@@ -1,5 +1,18 @@
 export const requestDurationOptions = [30, 45, 60]
 
+export const requestTimeOptions = [
+  '16:00',
+  '16:30',
+  '17:00',
+  '17:30',
+  '18:00',
+]
+
+export const requestContext = {
+  currentDayOrder: 0,
+  currentTime: '15:45',
+}
+
 export const initialRequests = [
   {
     id: 'request-001',
@@ -7,6 +20,7 @@ export const initialRequests = [
     phone: '+56 9 6123 4587',
     service: 'Corte de cabello',
     date: 'Hoy, 27 de agosto',
+    dayOrder: 0,
     time: '15:30',
     status: 'pending',
     suggestedDuration: 45,
@@ -18,6 +32,7 @@ export const initialRequests = [
     phone: '+56 9 8472 1093',
     service: 'Corte + barba',
     date: 'Hoy, 27 de agosto',
+    dayOrder: 0,
     time: '17:00',
     status: 'pending',
     suggestedDuration: 60,
@@ -29,8 +44,9 @@ export const initialRequests = [
     phone: '+56 9 5318 7742',
     service: 'Barba',
     date: 'Mañana, 28 de agosto',
+    dayOrder: 1,
     time: '10:00',
-    status: 'pending',
+    status: 'confirmed',
     suggestedDuration: 30,
     duration: 30,
   },
@@ -40,6 +56,7 @@ export const initialRequests = [
     phone: '+56 9 7294 2031',
     service: 'Corte de cabello',
     date: 'Mañana, 28 de agosto',
+    dayOrder: 1,
     time: '11:00',
     status: 'pending',
     suggestedDuration: 45,
@@ -51,6 +68,7 @@ export const initialRequests = [
     phone: '+56 9 4186 9350',
     service: 'Corte + barba',
     date: 'Sábado, 29 de agosto',
+    dayOrder: 2,
     time: '12:00',
     status: 'pending',
     suggestedDuration: 60,
@@ -62,6 +80,7 @@ export const initialRequests = [
     phone: '+56 9 9024 1168',
     service: 'Corte de cabello',
     date: 'Hoy, 27 de agosto',
+    dayOrder: 0,
     time: '10:00',
     status: 'confirmed',
     suggestedDuration: 45,
@@ -73,6 +92,7 @@ export const initialRequests = [
     phone: '+56 9 3561 8824',
     service: 'Barba',
     date: 'Hoy, 27 de agosto',
+    dayOrder: 0,
     time: '12:00',
     status: 'rejected',
     suggestedDuration: 30,

@@ -6,15 +6,15 @@ function SchedulePage() {
     <div className="admin-page schedule-page">
       <header className="admin-page__heading">
         <div>
-          <p className="eyebrow">Vista diaria</p>
+          <p className="eyebrow">Jornada de hoy</p>
           <h1>Agenda</h1>
           <p>
-            Una lectura simple de la jornada, sin convertir todavía el panel en
-            un calendario complejo.
+            Revisa atenciones, espacios disponibles y bloqueos con una lectura
+            rápida de toda la jornada.
           </p>
         </div>
         <div className="schedule-date">
-          <span>Hoy</span>
+          <span>Vista del día</span>
           <strong>{schedule.dateLabel}</strong>
         </div>
       </header>
@@ -22,13 +22,13 @@ function SchedulePage() {
       <section className="schedule-summary" aria-label="Resumen de agenda">
         <div>
           <strong>{schedule.confirmedCount}</strong>
-          <span>Reservas confirmadas</span>
+          <span>Atenciones confirmadas</span>
         </div>
         <div>
           <strong>{schedule.availableCount}</strong>
-          <span>Espacios disponibles</span>
+          <span>Horarios abiertos</span>
         </div>
-        <p>Las solicitudes pendientes no aparecen aquí hasta ser aceptadas.</p>
+        <p>Los horarios bloqueados y disponibles se distinguen de inmediato.</p>
       </section>
 
       <section className="schedule-list" aria-label={`Agenda del ${schedule.dateLabel}`}>

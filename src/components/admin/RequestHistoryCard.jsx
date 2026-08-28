@@ -1,0 +1,49 @@
+import { isPastRequest } from '../../utils/requestUtils'
+
+const statusLabels = {
+  pending: 'Sin resolver',
+  confirmed: 'Confirmada',
+  rejected: 'Rechazada',
+  cancelled: 'Cancelada',
+  completed: 'Completada',
+}
+
+function RequestHistoryCard({ request, context }) {
+  const visualStatus =
+    request.status === 'pending' && isPastRequest(request, context)
+      ? 'expired'
+      : request.status
+
+  return (
+    <article className={`request-history-card request-history-card--${visualStatus}`}>
+      <header>
+        <div>
+          <span>Cliente</span>
+          <h2>{request.customerName}</h2>
+        </div>
+        <span className={`status-badge status-badge--${visualStatus}`}>
+          {visualStatus === 'expired'
+            ? 'Sin resolver'
+            : statusLabels[request.status]}
+        </span>
+      </header>
+
+      <dl>
+        <div>
+          <dt>Servicio</dt>
+          <dd>{request.service}</dd>
+        </div>
+        <div>
+          <dt>Fecha</dt>
+          <dd>{request.date}</dd>
+        </div>
+        <div>
+          <dt>Hora</dt>
+          <dd>{request.time}</dd>
+        </div>
+      </dl>
+    </article>
+  )
+}
+
+export default RequestHistoryCard

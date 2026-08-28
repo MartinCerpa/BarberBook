@@ -6,13 +6,6 @@ const placeholderContent = {
       'Aquí podrás consultar el historial de visitas y reconocer a tus clientes recurrentes.',
     features: ['Historial de reservas', 'Servicios frecuentes', 'Datos de contacto'],
   },
-  settings: {
-    eyebrow: 'Próxima etapa',
-    title: 'Configuración',
-    description:
-      'Este espacio reunirá tus servicios, horarios de atención y preferencias del perfil.',
-    features: ['Servicios y precios', 'Horario de atención', 'Perfil profesional'],
-  },
 }
 
 function AdminPlaceholderPage({ section }) {
@@ -24,11 +17,11 @@ function AdminPlaceholderPage({ section }) {
       <h1>{content.title}</h1>
       <p>{content.description}</p>
       <div className="placeholder-features">
-        {content.features.map((feature, index) => (
+        {content.features.map((feature) => (
           <div key={feature}>
-            <span>{String(index + 1).padStart(2, '0')}</span>
+            <span className="placeholder-feature__marker" aria-hidden="true" />
             <strong>{feature}</strong>
-            <small>Preparado para crecer</small>
+            <small>Disponible en una próxima etapa</small>
           </div>
         ))}
       </div>

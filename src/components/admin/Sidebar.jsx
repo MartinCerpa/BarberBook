@@ -3,7 +3,7 @@ const navigationItems = [
   { id: 'requests', label: 'Solicitudes' },
   { id: 'schedule', label: 'Agenda' },
   { id: 'clients', label: 'Clientes' },
-  { id: 'settings', label: 'Ajustes' },
+  { id: 'settings', label: 'Configuración', mobileLabel: 'Ajustes' },
 ]
 
 function NavigationIcon({ section }) {
@@ -66,10 +66,11 @@ function Sidebar({ activeSection, mobile = false }) {
         <a
           href={`#/panel/${item.id}`}
           aria-current={activeSection === item.id ? 'page' : undefined}
+          aria-label={mobile && item.mobileLabel ? item.label : undefined}
           key={item.id}
         >
           <NavigationIcon section={item.id} />
-          <strong>{item.label}</strong>
+          <strong>{mobile && item.mobileLabel ? item.mobileLabel : item.label}</strong>
         </a>
       ))}
     </nav>

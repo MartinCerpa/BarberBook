@@ -7,12 +7,12 @@ function AdminDashboardPage({ pendingRequests }) {
     <div className="admin-page dashboard-page">
       <header className="admin-page__heading">
         <div>
-          <p className="eyebrow">Resumen de hoy</p>
+          <p className="eyebrow">Resumen profesional</p>
           <h1>{dashboard.greeting}</h1>
           <p>{dashboard.introduction}</p>
         </div>
         <a className="button button--primary" href="#/panel/requests">
-          Revisar solicitudes
+          Gestionar solicitudes
         </a>
       </header>
 
@@ -24,8 +24,14 @@ function AdminDashboardPage({ pendingRequests }) {
           tone="accent"
         />
         <DashboardCard
-          label="Reservas hoy"
-          value={dashboard.reservationsToday}
+          label="Próxima atención"
+          value={dashboard.nextClient.time}
+          detail={`${dashboard.nextClient.name} · ${dashboard.nextClient.service}`}
+          tone="dark"
+        />
+        <DashboardCard
+          label="Clientes del día"
+          value={dashboard.clientsToday}
           detail={`${dashboard.completedAppointments} atenciones completadas`}
         />
         <DashboardCard
@@ -33,37 +39,34 @@ function AdminDashboardPage({ pendingRequests }) {
           value={formatCurrency(dashboard.estimatedIncome)}
           detail="Según reservas confirmadas"
         />
-        <DashboardCard
-          label="Próximo cliente"
-          value={dashboard.nextClient.time}
-          detail={`${dashboard.nextClient.name} · ${dashboard.nextClient.service}`}
-          tone="dark"
-        />
       </section>
 
       <section className="dashboard-focus">
         <div>
-          <p className="eyebrow">Siguiente paso</p>
-          <h2>Tu agenda está bajo control</h2>
+          <p className="eyebrow">Próxima atención</p>
+          <h2>{dashboard.nextClient.time} · {dashboard.nextClient.name}</h2>
           <p>
-            Las solicitudes nuevas permanecen pendientes hasta que las revises.
-            Ninguna hora se confirma automáticamente.
+            {dashboard.nextClient.service}. Revisa la jornada completa o resuelve
+            primero las solicitudes que todavía esperan una decisión.
           </p>
         </div>
-        <dl>
-          <div>
-            <dt>Próxima atención</dt>
-            <dd>{dashboard.nextClient.time}</dd>
-          </div>
-          <div>
-            <dt>Cliente</dt>
-            <dd>{dashboard.nextClient.name}</dd>
-          </div>
-          <div>
-            <dt>Servicio</dt>
-            <dd>{dashboard.nextClient.service}</dd>
-          </div>
-        </dl>
+        <div className="dashboard-focus__aside">
+          <dl>
+            <div>
+              <dt>Atenciones de hoy</dt>
+              <dd>{dashboard.reservationsToday}</dd>
+            </div>
+            <div>
+              <dt>Completadas</dt>
+              <dd>{dashboard.completedAppointments}</dd>
+            </div>
+            <div>
+              <dt>Pendientes</dt>
+              <dd>{pendingRequests}</dd>
+            </div>
+          </dl>
+          <a href="#/panel/schedule">Abrir agenda completa <span aria-hidden="true">→</span></a>
+        </div>
       </section>
     </div>
   )

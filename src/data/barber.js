@@ -11,7 +11,7 @@ export const barber = {
   },
   professional: {
     name: 'Matías',
-    role: 'Barbero',
+    role: 'Profesional',
     bio: 'Cortes precisos, atención cercana y un espacio pensado para que cada visita se sienta personal.',
   },
   services: [

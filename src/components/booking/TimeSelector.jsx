@@ -55,8 +55,8 @@ function TimeSelector({ slots, selectedTime, onSelect, onBack, onNext }) {
           </svg>
           <p>
             <strong>Esta hora ya tiene solicitudes pendientes.</strong>
-            Puedes solicitarla igualmente, pero el barbero decidirá qué reserva
-            confirmar.
+            Puedes solicitarla igualmente. La solicitud quedará pendiente hasta
+            que el profesional confirme la reserva.
           </p>
         </div>
       )}

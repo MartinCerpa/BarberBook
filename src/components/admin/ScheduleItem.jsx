@@ -24,7 +24,7 @@ function ScheduleItem({ item }) {
               <span>
                 {item.status === 'available'
                   ? 'Espacio libre para nuevas solicitudes'
-                  : 'Horario reservado por el barbero'}
+                  : 'Horario bloqueado por el profesional'}
               </span>
             </>
           )}

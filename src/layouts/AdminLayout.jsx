@@ -7,7 +7,7 @@ const sectionLabels = {
   requests: 'Solicitudes',
   schedule: 'Agenda',
   clients: 'Clientes',
-  settings: 'Ajustes',
+  settings: 'Configuración',
 }
 
 function AdminLayout({ activeSection, children }) {
@@ -28,7 +28,7 @@ function AdminLayout({ activeSection, children }) {
           <span className="admin-avatar" aria-hidden="true">M</span>
           <div>
             <strong>Matías</strong>
-            <span>Barbero independiente</span>
+            <span>Profesional independiente</span>
           </div>
           <a href="#inicio">Ver perfil público</a>
         </div>
@@ -37,7 +37,7 @@ function AdminLayout({ activeSection, children }) {
       <div className="admin-workspace">
         <header className="admin-header">
           <div>
-            <span>Panel del barbero</span>
+            <span>Panel profesional</span>
             <strong>{sectionLabels[activeSection]}</strong>
           </div>
           <div className="admin-header__actions">

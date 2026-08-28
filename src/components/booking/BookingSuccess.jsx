@@ -12,7 +12,8 @@ function BookingSuccess({ booking, service, onReturn }) {
       <p className="eyebrow">Solicitud enviada</p>
       <h1>Tu hora está pendiente de confirmación</h1>
       <p className="booking-success__message">
-        El barbero revisará tu solicitud y decidirá si puede confirmar la hora.
+        El profesional revisará tu solicitud y confirmará la hora cuando esté
+        disponible.
       </p>
 
       <dl className="booking-success__summary">
