@@ -1,10 +1,10 @@
+import { requestDurationOptions } from '../../data/requests'
+
 const statusLabels = {
   pending: 'Pendiente',
   confirmed: 'Confirmada',
   rejected: 'Rechazada',
 }
-
-const durationOptions = [30, 45, 60, 75, 90]
 
 function RequestCard({ request, onStatusChange, onDurationChange }) {
   const isPending = request.status === 'pending'
@@ -55,7 +55,7 @@ function RequestCard({ request, onStatusChange, onDurationChange }) {
                 onDurationChange(request.id, Number(event.target.value))
               }
             >
-              {durationOptions.map((duration) => (
+              {requestDurationOptions.map((duration) => (
                 <option value={duration} key={duration}>
                   {duration} min
                 </option>

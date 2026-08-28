@@ -60,6 +60,32 @@
   gap: 0.6rem;
 }
 
+.admin-public-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 0.65rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    color var(--transition),
+    transform var(--transition);
+}
+
+.admin-public-link:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
 .admin-header .theme-toggle span {
   position: absolute;
   width: 1px;
@@ -315,6 +341,7 @@
 
 .admin-navigation a:focus-visible,
 .admin-mobile-nav a:focus-visible,
+.admin-public-link:focus-visible,
 .admin-sidebar__footer a:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-accent) 60%, transparent);
   outline-offset: 2px;
@@ -413,6 +440,11 @@
   border-radius: var(--radius-medium);
   background: var(--color-surface);
   box-shadow: var(--shadow-card);
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
 }
 
 .request-card--pending {
@@ -470,6 +502,10 @@
   font-weight: 900;
   letter-spacing: 0.04em;
   white-space: nowrap;
+  transition:
+    background-color var(--transition),
+    color var(--transition),
+    transform var(--transition);
 }
 
 .status-badge--pending {
@@ -605,6 +641,7 @@
   font-size: 0.7rem;
   font-weight: 700;
   text-align: center;
+  animation: request-status-enter 240ms ease both;
 }
 
 .requests-empty {
@@ -823,6 +860,18 @@
   outline-offset: 2px;
 }
 
+@keyframes request-status-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (min-width: 36rem) {
   .admin-main {
     padding-inline: 1.5rem;
@@ -1003,7 +1052,7 @@
     padding-inline: 2rem;
   }
 
-  .admin-header__actions > .admin-avatar {
+  .admin-public-link {
     display: none;
   }
 

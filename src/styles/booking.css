@@ -9,6 +9,11 @@
   border: 0;
 }
 
+.booking-step,
+.booking-success {
+  animation: booking-step-enter 280ms ease both;
+}
+
 .booking-section {
   min-height: calc(100vh - 9rem);
   padding: 1.5rem 0 4rem;
@@ -180,6 +185,7 @@
 .booking-options,
 .date-options,
 .time-options {
+  min-inline-size: 0;
   margin: 0;
   padding: 0;
   border: 0;
@@ -289,6 +295,7 @@
 
 .date-options {
   display: grid;
+  width: 100%;
   grid-auto-columns: minmax(6.8rem, 1fr);
   grid-auto-flow: column;
   gap: 0.65rem;
@@ -319,6 +326,7 @@
 .date-option.is-selected {
   background: var(--color-accent);
   color: var(--color-accent-text);
+  transform: translateY(-2px);
 }
 
 .date-option > span {
@@ -389,8 +397,15 @@
 
 .time-options {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  grid-auto-columns: minmax(7.5rem, 42%);
+  grid-auto-flow: column;
   gap: 0.65rem;
+  padding: 0.25rem 0.2rem 0.9rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+  scroll-snap-type: inline proximity;
 }
 
 .time-option {
@@ -402,6 +417,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-small);
   background: var(--color-background);
+  scroll-snap-align: start;
 }
 
 .time-option:hover,
@@ -411,6 +427,7 @@
 
 .time-option.is-selected {
   box-shadow: inset 0 0 0 1px var(--color-accent);
+  transform: translateY(-2px);
 }
 
 .time-option > strong {
@@ -658,6 +675,7 @@
   border-radius: 50%;
   background: color-mix(in srgb, var(--color-accent) 14%, transparent);
   color: var(--color-accent);
+  animation: booking-confirmation-pop 420ms ease both;
 }
 
 .booking-success__icon svg {
@@ -700,6 +718,34 @@
   width: 100%;
 }
 
+@keyframes booking-step-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.65rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes booking-confirmation-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.78);
+  }
+
+  70% {
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 @media (min-width: 32rem) {
   .booking-progress__mobile {
     display: none;
@@ -724,7 +770,12 @@
   }
 
   .time-options {
+    grid-auto-columns: initial;
+    grid-auto-flow: initial;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding: 0;
+    overflow: visible;
+    scroll-snap-type: none;
   }
 
   .booking-success {

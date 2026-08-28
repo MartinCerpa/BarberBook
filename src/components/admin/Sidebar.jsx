@@ -3,7 +3,12 @@ const navigationItems = [
   { id: 'requests', label: 'Solicitudes', number: '02' },
   { id: 'schedule', label: 'Agenda', number: '03' },
   { id: 'clients', label: 'Clientes', number: '04' },
-  { id: 'settings', label: 'Configuración', number: '05' },
+  {
+    id: 'settings',
+    label: 'Configuración',
+    mobileLabel: 'Ajustes',
+    number: '05',
+  },
 ]
 
 function Sidebar({ activeSection, mobile = false }) {
@@ -16,10 +21,11 @@ function Sidebar({ activeSection, mobile = false }) {
         <a
           href={`#/panel/${item.id}`}
           aria-current={activeSection === item.id ? 'page' : undefined}
+          aria-label={mobile && item.mobileLabel ? item.label : undefined}
           key={item.id}
         >
           <span aria-hidden="true">{item.number}</span>
-          <strong>{item.label}</strong>
+          <strong>{mobile && item.mobileLabel ? item.mobileLabel : item.label}</strong>
         </a>
       ))}
     </nav>

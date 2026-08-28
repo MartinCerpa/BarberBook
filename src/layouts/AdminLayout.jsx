@@ -41,8 +41,10 @@ function AdminLayout({ activeSection, children }) {
             <strong>{sectionLabels[activeSection]}</strong>
           </div>
           <div className="admin-header__actions">
+            <a className="admin-public-link" href="#inicio">
+              Ver perfil público
+            </a>
             <ThemeToggle />
-            <span className="admin-avatar" aria-label="Perfil de Matías">M</span>
           </div>
         </header>
 

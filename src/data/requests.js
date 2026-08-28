@@ -1,3 +1,5 @@
+export const requestDurationOptions = [30, 45, 60]
+
 export const initialRequests = [
   {
     id: 'request-001',
