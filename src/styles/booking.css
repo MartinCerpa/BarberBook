@@ -313,6 +313,10 @@
   white-space: nowrap;
 }
 
+.service-continue-bar {
+  display: none;
+}
+
 .date-options {
   display: grid;
   width: 100%;
@@ -925,6 +929,121 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 31.999rem) {
+  .booking-step--services.has-selection {
+    padding-bottom: calc(5.6rem + env(safe-area-inset-bottom));
+  }
+
+  .booking-step--services .booking-step__heading {
+    margin-bottom: 1.25rem;
+  }
+
+  .booking-step--services .booking-step__heading h1 {
+    font-size: clamp(2rem, 9vw, 2.4rem);
+  }
+
+  .booking-step--services .booking-step__heading > p:last-child {
+    margin-top: 0.65rem;
+    font-size: 0.84rem;
+    line-height: 1.5;
+  }
+
+  .booking-options--services {
+    gap: 0.55rem;
+  }
+
+  .booking-options--services .service-option {
+    min-height: 0;
+    padding: 0.82rem 0.9rem;
+    border-radius: 1rem;
+  }
+
+  .booking-options--services .service-option.is-selected {
+    background: color-mix(in srgb, var(--color-accent) 7%, var(--color-background));
+    box-shadow:
+      0 10px 24px color-mix(in srgb, var(--color-accent) 16%, transparent),
+      inset 0 0 0 1px var(--color-accent);
+    transform: translateY(-1px);
+  }
+
+  .booking-options--services .booking-option__check {
+    top: 0.78rem;
+    right: 0.85rem;
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .booking-options--services .service-option > strong {
+    font-size: 1.12rem;
+    line-height: 1.15;
+  }
+
+  .booking-options--services .service-option__description {
+    display: -webkit-box;
+    margin: 0.3rem 0 0.62rem;
+    overflow: hidden;
+    font-size: 0.74rem;
+    line-height: 1.4;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .booking-options--services .service-option__details {
+    margin-top: 0;
+    padding-top: 0.58rem;
+  }
+
+  .booking-options--services .service-option__details b {
+    font-size: 1rem;
+  }
+
+  .booking-options--services .service-option__details span {
+    font-size: 0.66rem;
+  }
+
+  .booking-actions--services .button--primary {
+    display: none;
+  }
+
+  .service-continue-bar {
+    position: fixed;
+    z-index: 40;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: flex;
+    justify-content: center;
+    padding:
+      1rem max(1rem, env(safe-area-inset-right))
+      calc(0.75rem + env(safe-area-inset-bottom))
+      max(1rem, env(safe-area-inset-left));
+    background: linear-gradient(
+      to top,
+      var(--color-background) 0%,
+      color-mix(in srgb, var(--color-background) 94%, transparent) 76%,
+      transparent 100%
+    );
+    pointer-events: none;
+    animation: booking-notice-enter 240ms ease both;
+  }
+
+  .service-continue-bar .button {
+    width: min(100%, 30rem);
+    min-height: 3.5rem;
+    gap: 0.65rem;
+    pointer-events: auto;
+  }
+
+  .service-continue-bar .button span {
+    font-size: 1rem;
+    transition: transform var(--transition);
+  }
+
+  .service-continue-bar .button:active span {
+    transform: translateX(0.18rem);
   }
 }
 
