@@ -1,6 +1,6 @@
 const statusLabels = {
   available: 'Disponible',
-  pending: 'Solicitudes pendientes',
+  pending: 'Con solicitudes',
   confirmed: 'No disponible',
   blocked: 'Bloqueado',
 }
@@ -9,7 +9,7 @@ function TimeSelector({ slots, selectedTime, onSelect, onBack, onNext }) {
   const selectedSlot = slots.find((slot) => slot.time === selectedTime)
 
   return (
-    <div className="booking-step">
+    <div className="booking-step booking-step--time">
       <div className="booking-step__heading">
         <p className="eyebrow">Paso 3</p>
         <h1>Selecciona una hora</h1>

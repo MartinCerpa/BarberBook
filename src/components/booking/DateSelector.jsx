@@ -1,6 +1,6 @@
 function DateSelector({ dates, selectedId, onSelect, onBack, onNext }) {
   return (
-    <div className="booking-step">
+    <div className="booking-step booking-step--date">
       <div className="booking-step__heading">
         <p className="eyebrow">Paso 2</p>
         <h1>Elige una fecha</h1>
