@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import BookingFlow from '../components/booking/BookingFlow'
 import LocationLink from '../components/LocationLink'
-import { barber } from '../data/barber'
+import { business } from '../data/business'
+import { professional } from '../data/professional'
+import { services } from '../data/services'
 import PublicLayout from '../layouts/PublicLayout'
 
 function CalendarIcon() {
@@ -17,7 +19,6 @@ function PublicBarberPage() {
   const [isBooking, setIsBooking] = useState(false)
   const [showMobileCta, setShowMobileCta] = useState(false)
   const primaryCtaRef = useRef(null)
-  const { business, professional, services } = barber
 
   useEffect(() => {
     const primaryCta = primaryCtaRef.current
