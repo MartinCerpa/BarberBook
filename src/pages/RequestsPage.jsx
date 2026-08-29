@@ -100,10 +100,6 @@ function RequestsPage({
         <div>
           <p className="eyebrow">Gestión de reservas</p>
           <h1>Solicitudes</h1>
-          <p>
-            Revisa primero las próximas atenciones y conserva las decisiones
-            anteriores en un historial separado.
-          </p>
         </div>
         <div className="requests-page__pending-count">
           <strong>{pendingCount}</strong>
