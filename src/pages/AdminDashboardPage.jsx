@@ -7,32 +7,30 @@ function AdminDashboardPage({ pendingRequests }) {
     <div className="admin-page dashboard-page">
       <header className="admin-page__heading">
         <div>
-          <p className="eyebrow">Resumen profesional</p>
-          <h1>{dashboard.greeting}</h1>
-          <p>{dashboard.introduction}</p>
+          <p className="eyebrow">Resumen de hoy</p>
+          <h1>Tu jornada</h1>
         </div>
-        <a className="button button--primary" href="#/panel/requests">
-          Gestionar solicitudes
-        </a>
       </header>
 
       <section className="dashboard-grid" aria-label="Indicadores de hoy">
         <DashboardCard
-          label="Solicitudes pendientes"
+          label="Solicitudes"
           value={pendingRequests}
-          detail="Esperan tu decisión"
+          detail="solicitudes por revisar"
           tone="accent"
+          href="#/panel/requests"
         />
         <DashboardCard
           label="Próxima atención"
           value={dashboard.nextClient.time}
           detail={`${dashboard.nextClient.name} · ${dashboard.nextClient.service}`}
           tone="dark"
+          href="#/panel/schedule"
         />
         <DashboardCard
           label="Clientes del día"
           value={dashboard.clientsToday}
-          detail={`${dashboard.completedAppointments} atenciones completadas`}
+          detail="clientes agendados"
         />
         <DashboardCard
           label="Ingresos estimados"
@@ -43,29 +41,15 @@ function AdminDashboardPage({ pendingRequests }) {
 
       <section className="dashboard-focus">
         <div>
-          <p className="eyebrow">Próxima atención</p>
-          <h2>{dashboard.nextClient.time} · {dashboard.nextClient.name}</h2>
+          <p className="eyebrow">Agenda de hoy</p>
+          <h2>{dashboard.reservationsToday} atenciones</h2>
           <p>
-            {dashboard.nextClient.service}. Revisa la jornada completa o resuelve
-            primero las solicitudes que todavía esperan una decisión.
+            {dashboard.completedAppointments} completadas ·{' '}
+            {dashboard.reservationsToday - dashboard.completedAppointments} por atender
           </p>
         </div>
         <div className="dashboard-focus__aside">
-          <dl>
-            <div>
-              <dt>Atenciones de hoy</dt>
-              <dd>{dashboard.reservationsToday}</dd>
-            </div>
-            <div>
-              <dt>Completadas</dt>
-              <dd>{dashboard.completedAppointments}</dd>
-            </div>
-            <div>
-              <dt>Pendientes</dt>
-              <dd>{pendingRequests}</dd>
-            </div>
-          </dl>
-          <a href="#/panel/schedule">Abrir agenda completa <span aria-hidden="true">→</span></a>
+          <a href="#/panel/schedule">Abrir agenda <span aria-hidden="true">→</span></a>
         </div>
       </section>
     </div>
