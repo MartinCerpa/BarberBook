@@ -11,16 +11,9 @@ import {
   splitDateLabel,
 } from '../utils/requestUtils'
 
-const upcomingFilters = [
-  { id: 'all', label: 'Todas' },
-  { id: 'pending', label: 'Pendientes' },
-  { id: 'confirmed', label: 'Confirmadas' },
-]
-
 const historyFilters = [
   { id: 'all', label: 'Todas' },
   { id: 'past', label: 'Pasadas' },
-  { id: 'rejected', label: 'Rechazadas' },
   { id: 'cancelled', label: 'Canceladas' },
   { id: 'completed', label: 'Completadas' },
 ]
@@ -40,8 +33,18 @@ function RequestsPage({
     () =>
       sortUpcomingRequests(
         requests.filter(
-          (request) => !isHistoricalRequest(request, requestContext),
+          (request) =>
+            request.status === 'pending' &&
+            !isHistoricalRequest(request, requestContext),
         ),
+      ),
+    [requests],
+  )
+
+  const rejectedRequests = useMemo(
+    () =>
+      sortHistoryRequests(
+        requests.filter((request) => request.status === 'rejected'),
       ),
     [requests],
   )
@@ -49,16 +52,22 @@ function RequestsPage({
   const historyRequests = useMemo(
     () =>
       sortHistoryRequests(
-        requests.filter((request) =>
-          isHistoricalRequest(request, requestContext),
+        requests.filter(
+          (request) =>
+            request.status !== 'rejected' &&
+            isHistoricalRequest(request, requestContext),
         ),
       ),
     [requests],
   )
 
   const activeRequests =
-    activeView === 'upcoming' ? upcomingRequests : historyRequests
-  const filters = activeView === 'upcoming' ? upcomingFilters : historyFilters
+    activeView === 'upcoming'
+      ? upcomingRequests
+      : activeView === 'rejected'
+        ? rejectedRequests
+        : historyRequests
+  const filters = activeView === 'history' ? historyFilters : []
   const visibleRequests = activeRequests.filter((request) => {
     if (activeFilter === 'all') {
       return true
@@ -71,9 +80,21 @@ function RequestsPage({
     return request.status === activeFilter
   })
   const groupedRequests = groupRequestsByDate(visibleRequests)
-  const pendingCount = upcomingRequests.filter(
-    (request) => request.status === 'pending',
-  ).length
+  const pendingCount = upcomingRequests.length
+  const viewHeading = {
+    upcoming: {
+      eyebrow: 'Por resolver',
+      title: 'Solicitudes pendientes',
+    },
+    rejected: {
+      eyebrow: 'Sin acciones pendientes',
+      title: 'Solicitudes rechazadas',
+    },
+    history: {
+      eyebrow: 'Registro reciente',
+      title: 'Historial de solicitudes',
+    },
+  }[activeView]
 
   const getCount = (filterId) => {
     if (filterId === 'all') {
@@ -124,6 +145,15 @@ function RequestsPage({
         <button
           type="button"
           role="tab"
+          aria-selected={activeView === 'rejected'}
+          onClick={() => selectView('rejected')}
+        >
+          <span>Rechazadas</span>
+          <strong>{rejectedRequests.length}</strong>
+        </button>
+        <button
+          type="button"
+          role="tab"
           aria-selected={activeView === 'history'}
           onClick={() => selectView('history')}
         >
@@ -134,14 +164,8 @@ function RequestsPage({
 
       <div className="request-list-heading">
         <div>
-          <p className="eyebrow">
-            {activeView === 'upcoming' ? 'Orden cronológico' : 'Registro reciente'}
-          </p>
-          <h2>
-            {activeView === 'upcoming'
-              ? 'Próximas atenciones'
-              : 'Historial de solicitudes'}
-          </h2>
+          <p className="eyebrow">{viewHeading.eyebrow}</p>
+          <h2>{viewHeading.title}</h2>
         </div>
         {activeView === 'upcoming' && (
           <p>
@@ -150,19 +174,25 @@ function RequestsPage({
         )}
       </div>
 
-      <div className="request-filters" role="group" aria-label="Filtrar solicitudes">
-        {filters.map((filter) => (
-          <button
-            type="button"
-            aria-pressed={activeFilter === filter.id}
-            onClick={() => setActiveFilter(filter.id)}
-            key={filter.id}
-          >
-            {filter.label}
-            <span>{getCount(filter.id)}</span>
-          </button>
-        ))}
-      </div>
+      {filters.length > 0 && (
+        <div
+          className="request-filters"
+          role="group"
+          aria-label="Filtrar solicitudes"
+        >
+          {filters.map((filter) => (
+            <button
+              type="button"
+              aria-pressed={activeFilter === filter.id}
+              onClick={() => setActiveFilter(filter.id)}
+              key={filter.id}
+            >
+              {filter.label}
+              <span>{getCount(filter.id)}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {feedback && (
         <div
@@ -211,7 +241,11 @@ function RequestsPage({
             : (
                 <section
                   className="request-history-grid"
-                  aria-label="Historial de solicitudes"
+                  aria-label={
+                    activeView === 'rejected'
+                      ? 'Solicitudes rechazadas'
+                      : 'Historial de solicitudes'
+                  }
                 >
                   {visibleRequests.map((request) => (
                     <RequestHistoryCard

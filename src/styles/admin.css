@@ -476,7 +476,7 @@
 
 .request-view-switcher {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.35rem;
   margin-bottom: 1.4rem;
   padding: 0.3rem;
@@ -1770,10 +1770,10 @@
 
   .requests-page .request-view-switcher button {
     min-height: 2.7rem;
-    gap: 0.35rem;
-    padding: 0.4rem 0.55rem;
+    gap: 0.25rem;
+    padding: 0.4rem 0.4rem;
     border-radius: 0.65rem;
-    font-size: 0.64rem;
+    font-size: 0.6rem;
     line-height: 1.2;
   }
 
