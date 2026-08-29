@@ -1,5 +1,15 @@
 export const professional = {
+  id: 'professional-matias',
+  slug: 'matias',
   name: 'Matías',
+  profileImage: '/images/professionals/matias/profile.webp',
+  coverImage: '/images/professionals/matias/cover.webp',
   role: 'Profesional',
+  title: 'Especialista en cortes y barba',
   bio: 'Cortes precisos, atención cercana y un espacio pensado para que cada visita se sienta personal.',
+  specialties: ['Cortes de cabello', 'Degradados', 'Diseño de barba'],
+  location: 'Santiago, Chile',
+  instagram: '@matias.cortes',
+  whatsapp: '+56 9 1234 5678',
+  businessId: null,
 }
