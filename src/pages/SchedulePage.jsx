@@ -2,6 +2,15 @@ import ScheduleItem from '../components/admin/ScheduleItem'
 import { schedule } from '../data/schedule'
 
 function SchedulePage() {
+  const nextAppointmentIndex = schedule.items.findIndex((item) => item.isNext)
+  const completedCount = schedule.items.filter(
+    (item, itemIndex) =>
+      item.status === 'confirmed' &&
+      nextAppointmentIndex >= 0 &&
+      itemIndex < nextAppointmentIndex,
+  ).length
+  const pendingAttentionCount = schedule.confirmedCount - completedCount
+
   return (
     <div className="admin-page schedule-page">
       <header className="admin-page__heading">
@@ -22,13 +31,23 @@ function SchedulePage() {
       <section className="schedule-summary" aria-label="Resumen de agenda">
         <div>
           <strong>{schedule.confirmedCount}</strong>
-          <span>Atenciones confirmadas</span>
+          <span>Total de atenciones</span>
         </div>
         <div>
-          <strong>{schedule.availableCount}</strong>
-          <span>Horarios abiertos</span>
+          <strong>{completedCount}</strong>
+          <span>Completadas</span>
         </div>
-        <p>Los horarios bloqueados y disponibles se distinguen de inmediato.</p>
+        <a
+          className="schedule-summary__link"
+          href="#/panel/requests"
+          aria-label={`Ver ${pendingAttentionCount} solicitudes pendientes`}
+        >
+          <strong>{pendingAttentionCount}</strong>
+          <span>Pendientes</span>
+          <span className="schedule-summary__link-action" aria-hidden="true">
+            Ver →
+          </span>
+        </a>
       </section>
 
       <section className="schedule-list" aria-label={`Agenda del ${schedule.dateLabel}`}>
