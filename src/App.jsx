@@ -23,6 +23,7 @@ const getAdminSection = () => {
 
 function App() {
   const [adminSection, setAdminSection] = useState(getAdminSection)
+  const [adminNavigationKey, setAdminNavigationKey] = useState(0)
 
   useEffect(() => {
     const syncRoute = () => setAdminSection(getAdminSection())
@@ -31,8 +32,23 @@ function App() {
     return () => window.removeEventListener('hashchange', syncRoute)
   }, [])
 
+  const navigateToAdminRoot = (section) => {
+    if (!adminSections.has(section)) {
+      return
+    }
+
+    setAdminSection(section)
+    setAdminNavigationKey((currentKey) => currentKey + 1)
+  }
+
   if (adminSection) {
-    return <AdminPanelPage activeSection={adminSection} />
+    return (
+      <AdminPanelPage
+        activeSection={adminSection}
+        navigationKey={adminNavigationKey}
+        onNavigate={navigateToAdminRoot}
+      />
+    )
   }
 
   return <PublicBarberPage />

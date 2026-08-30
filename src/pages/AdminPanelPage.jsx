@@ -17,7 +17,7 @@ const requestStatusMessages = {
   cancelled: 'Reserva cancelada.',
 }
 
-function AdminPanelPage({ activeSection }) {
+function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
   const [requests, setRequests] = useState(initialRequests)
   const [requestFeedback, setRequestFeedback] = useState(null)
   const feedbackTimerRef = useRef(null)
@@ -33,8 +33,8 @@ function AdminPanelPage({ activeSection }) {
   )
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }, [activeSection])
+    window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [activeSection, navigationKey])
 
   useEffect(
     () => () => {
@@ -149,7 +149,11 @@ function AdminPanelPage({ activeSection }) {
   }
 
   return (
-    <AdminLayout activeSection={activeSection}>
+    <AdminLayout
+      activeSection={activeSection}
+      navigationKey={navigationKey}
+      onNavigate={onNavigate}
+    >
       {renderSection()}
     </AdminLayout>
   )

@@ -56,7 +56,7 @@ function NavigationIcon({ section }) {
   )
 }
 
-function Sidebar({ activeSection, mobile = false }) {
+function Sidebar({ activeSection, mobile = false, onNavigate }) {
   return (
     <nav
       className={mobile ? 'admin-mobile-nav' : 'admin-navigation'}
@@ -65,6 +65,7 @@ function Sidebar({ activeSection, mobile = false }) {
       {navigationItems.map((item) => (
         <a
           href={`#/panel/${item.id}`}
+          onClick={() => onNavigate?.(item.id)}
           aria-current={activeSection === item.id ? 'page' : undefined}
           aria-label={mobile && item.mobileLabel ? item.label : undefined}
           key={item.id}

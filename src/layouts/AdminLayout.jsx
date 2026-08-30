@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import Brand from '../components/Brand'
 import Sidebar from '../components/admin/Sidebar'
 import ThemeToggle from '../components/ThemeToggle'
@@ -11,7 +12,7 @@ const sectionLabels = {
   settings: 'Configuración',
 }
 
-function AdminLayout({ activeSection, children }) {
+function AdminLayout({ activeSection, children, navigationKey, onNavigate }) {
   return (
     <div className="admin-shell">
       <aside className="admin-sidebar">
@@ -23,7 +24,7 @@ function AdminLayout({ activeSection, children }) {
           <p className="admin-sidebar__caption">Espacio profesional</p>
         </div>
 
-        <Sidebar activeSection={activeSection} />
+        <Sidebar activeSection={activeSection} onNavigate={onNavigate} />
 
         <div className="admin-sidebar__footer">
           <span className="admin-avatar" aria-hidden="true">M</span>
@@ -49,10 +50,16 @@ function AdminLayout({ activeSection, children }) {
           </div>
         </header>
 
-        <main className="admin-main">{children}</main>
+        <main className="admin-main">
+          <Fragment key={navigationKey}>{children}</Fragment>
+        </main>
       </div>
 
-      <Sidebar activeSection={activeSection} mobile />
+      <Sidebar
+        activeSection={activeSection}
+        mobile
+        onNavigate={onNavigate}
+      />
     </div>
   )
 }
