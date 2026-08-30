@@ -1,10 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import BookingFlow from '../components/booking/BookingFlow'
-import LocationLink from '../components/LocationLink'
+import PortfolioSection from '../components/public/PortfolioSection'
+import ProfileHero from '../components/public/ProfileHero'
 import { business } from '../data/business'
 import { professional } from '../data/professional'
 import { services } from '../data/services'
 import PublicLayout from '../layouts/PublicLayout'
+import { getFeaturedPortfolioItems } from '../services/portfolioService'
+import { getPublicProfile } from '../services/professionalService'
 
 function CalendarIcon() {
   return (
@@ -18,7 +21,29 @@ function CalendarIcon() {
 function PublicBarberPage() {
   const [isBooking, setIsBooking] = useState(false)
   const [showMobileCta, setShowMobileCta] = useState(false)
+  const [publicProfile, setPublicProfile] = useState({ business, professional })
+  const [featuredWork, setFeaturedWork] = useState([])
   const primaryCtaRef = useRef(null)
+
+  useEffect(() => {
+    let isActive = true
+
+    const loadPublicProfile = async () => {
+      const profile = await getPublicProfile()
+      const portfolio = await getFeaturedPortfolioItems(profile.professional.id)
+
+      if (isActive) {
+        setPublicProfile(profile)
+        setFeaturedWork(portfolio)
+      }
+    }
+
+    loadPublicProfile()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   useEffect(() => {
     const primaryCta = primaryCtaRef.current
@@ -65,7 +90,7 @@ function PublicBarberPage() {
 
     revealElements.forEach((element) => observer.observe(element))
     return () => observer.disconnect()
-  }, [isBooking])
+  }, [featuredWork.length, isBooking])
 
   const changeView = (bookingIsOpen) => {
     setShowMobileCta(false)
@@ -85,110 +110,17 @@ function PublicBarberPage() {
 
   return (
     <PublicLayout>
-      <section className="hero-section" id="inicio">
-        <div className="container hero-grid">
-          <div className="hero-copy">
-            <p className="eyebrow" data-reveal data-reveal-order="1">
-              Perfil profesional
-            </p>
-            <h1 data-reveal data-reveal-order="2">{professional.name}</h1>
-            <p
-              className="hero-copy__role"
-              data-reveal
-              data-reveal-order="3"
-            >
-              {professional.role}
-            </p>
-            <p
-              className="hero-copy__bio"
-              data-reveal
-              data-reveal-order="3"
-            >
-              {professional.bio}
-            </p>
+      <ProfileHero
+        business={publicProfile.business}
+        professional={publicProfile.professional}
+        onBook={() => changeView(true)}
+        primaryCtaRef={primaryCtaRef}
+      />
 
-            <button
-              className="button button--primary booking-cta"
-              type="button"
-              onClick={() => changeView(true)}
-              ref={primaryCtaRef}
-              data-reveal
-              data-reveal-order="4"
-            >
-              <span className="booking-cta__icon">
-                <CalendarIcon />
-              </span>
-              <span className="booking-cta__copy">
-                <strong>Reservar ahora</strong>
-                <small>Elige servicio, fecha y hora</small>
-              </span>
-              <svg
-                className="booking-cta__arrow"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path d="M5 12h14M14 7l5 5-5 5" />
-              </svg>
-            </button>
-
-            <p
-              className="booking-assurance"
-              data-reveal
-              data-reveal-order="5"
-            >
-              <span aria-hidden="true">✓</span>
-              Reserva gratuita. El servicio se paga directamente en la barbería.
-            </p>
-
-            <div className="profile-facts">
-              <div
-                className="profile-location"
-                data-reveal
-                data-reveal-order="6"
-              >
-                <LocationLink
-                  location={business.location}
-                  mapsUrl={business.mapsUrl}
-                />
-              </div>
-              <div
-                className="profile-fact"
-                data-reveal
-                data-reveal-order="7"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 7v5l3 2" />
-                </svg>
-                <div>
-                  <span>Horario general</span>
-                  <strong>
-                    {business.openingHours.days} · {business.openingHours.time}
-                  </strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="profile-visual"
-            aria-label="Identidad visual de Matías"
-            data-reveal
-            data-reveal-order="3"
-          >
-            <div className="profile-visual__lines" aria-hidden="true" />
-            <span className="profile-visual__label">Estilo con intención</span>
-            <span className="profile-visual__monogram" aria-hidden="true">
-              M
-            </span>
-            <div className="profile-visual__caption">
-              <span>Precisión</span>
-              <span>Cercanía</span>
-              <span>Estilo</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PortfolioSection
+        items={featuredWork}
+        professionalName={publicProfile.professional.name}
+      />
 
       {showMobileCta && (
         <div className="mobile-booking-bar">
