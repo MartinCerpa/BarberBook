@@ -1,5 +1,8 @@
 import { useMemo, useState } from 'react'
-import { getBookingDates, getTimeSlotsForDate } from '../../data/availability'
+import {
+  getBookingDates,
+  getEffectiveTimeSlotsForDate,
+} from '../../services/availabilityService.js'
 import BookingProgress from './BookingProgress'
 import BookingSuccess from './BookingSuccess'
 import BookingSummary from './BookingSummary'
@@ -23,7 +26,8 @@ function BookingFlow({ services, onExit }) {
   const [booking, setBooking] = useState(initialBooking)
   const dates = useMemo(() => getBookingDates(), [])
   const slots = useMemo(
-    () => (booking.dateId ? getTimeSlotsForDate(booking.dateId) : []),
+    () =>
+      booking.dateId ? getEffectiveTimeSlotsForDate(booking.dateId) : [],
     [booking.dateId],
   )
   const selectedService = services.find(

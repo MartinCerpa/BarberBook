@@ -1961,6 +1961,271 @@
   margin-bottom: 0.35rem;
 }
 
+.schedule-availability {
+  display: grid;
+  gap: 0.85rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+.schedule-availability__heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.schedule-availability__heading .eyebrow {
+  margin-bottom: 0.2rem;
+}
+
+.schedule-availability__heading h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.schedule-availability__heading > strong {
+  color: var(--color-text-muted);
+  font-size: 0.68rem;
+  text-align: right;
+  text-transform: capitalize;
+}
+
+.schedule-date-options {
+  display: flex;
+  gap: 0.45rem;
+  padding-bottom: 0.25rem;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+
+.schedule-date-options::-webkit-scrollbar {
+  display: none;
+}
+
+.schedule-date-options button {
+  display: grid;
+  min-width: 3.5rem;
+  min-height: 3.65rem;
+  flex: 0 0 auto;
+  place-items: center;
+  gap: 0.05rem;
+  padding: 0.35rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-background);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  font: inherit;
+  scroll-snap-align: start;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    box-shadow var(--transition),
+    color var(--transition),
+    transform var(--transition);
+}
+
+.schedule-date-options button > span,
+.schedule-date-options button > small {
+  font-size: 0.55rem;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.schedule-date-options button > strong {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.schedule-date-options button[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--color-accent) 54%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 10%, var(--color-surface));
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--color-accent) 10%, transparent);
+  color: var(--color-text);
+  transform: translateY(-1px);
+}
+
+.schedule-date-options button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.schedule-date-options button:focus-visible,
+.schedule-availability-slot > button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
+.schedule-availability__slots {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.schedule-availability-slot {
+  display: grid;
+  grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+  min-height: 3.5rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+  background: var(--color-background);
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.schedule-availability-slot time {
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.schedule-availability-slot > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.schedule-availability-slot > div strong {
+  font-size: 0.72rem;
+}
+
+.schedule-availability-slot > div span {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 0.6rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-availability-slot > button {
+  min-height: 2.35rem;
+  padding: 0.45rem 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--color-accent) 34%, var(--color-border));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-accent);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.62rem;
+  font-weight: 900;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.schedule-availability-slot__fixed {
+  color: var(--color-text-muted);
+  font-size: 0.58rem;
+  font-weight: 800;
+}
+
+.schedule-availability-slot--confirmed {
+  background: color-mix(in srgb, var(--color-success) 4%, var(--color-background));
+}
+
+.schedule-availability-slot--pending {
+  border-color: color-mix(in srgb, var(--color-warning) 32%, var(--color-border));
+}
+
+.schedule-availability-slot.is-manual-block {
+  border-color: color-mix(in srgb, var(--color-text-muted) 34%, var(--color-border));
+  background: var(--color-surface-strong);
+}
+
+.schedule-availability__feedback {
+  min-height: 1rem;
+}
+
+.schedule-availability__feedback p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.64rem;
+}
+
+.schedule-availability__feedback p[data-type='success'] {
+  color: var(--color-success);
+}
+
+.schedule-availability__feedback p[data-type='error'] {
+  color: var(--color-error);
+}
+
+@media (max-width: 35.99rem) {
+  .schedule-availability {
+    gap: 0.65rem;
+    padding: 0.65rem;
+    border-radius: 1rem;
+  }
+
+  .schedule-availability__heading {
+    align-items: start;
+  }
+
+  .schedule-availability__heading h2 {
+    font-size: 1.15rem;
+  }
+
+  .schedule-availability__heading > strong {
+    max-width: 8rem;
+    font-size: 0.58rem;
+    line-height: 1.3;
+  }
+
+  .schedule-date-options button {
+    min-width: 3.15rem;
+    min-height: 3.25rem;
+  }
+
+  .schedule-availability-slot {
+    grid-template-columns: 2.85rem minmax(0, 1fr) auto;
+    min-height: 3.2rem;
+    gap: 0.45rem;
+    padding: 0.45rem 0.5rem;
+  }
+
+  .schedule-availability-slot > div span {
+    display: none;
+  }
+
+  .schedule-availability-slot > button {
+    min-height: 2.2rem;
+    padding-inline: 0.55rem;
+    font-size: 0.58rem;
+  }
+
+  .schedule-availability-slot__fixed {
+    max-width: 4rem;
+    font-size: 0.52rem;
+    text-align: right;
+  }
+}
+
+@media (min-width: 62rem) {
+  .schedule-availability__slots {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .settings-hub {
   max-width: 60rem;
 }
