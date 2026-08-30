@@ -3,6 +3,7 @@ import { initialRequests, requestContext } from '../data/requests'
 import AdminLayout from '../layouts/AdminLayout'
 import AdminDashboardPage from './AdminDashboardPage'
 import AdminPlaceholderPage from './AdminPlaceholderPage'
+import ClientsPage from './ClientsPage'
 import RequestsPage from './RequestsPage'
 import SchedulePage from './SchedulePage'
 import SettingsPage from './SettingsPage'
@@ -129,6 +130,10 @@ function AdminPanelPage({ activeSection }) {
 
     if (activeSection === 'schedule') {
       return <SchedulePage />
+    }
+
+    if (activeSection === 'clients') {
+      return <ClientsPage />
     }
 
     if (activeSection === 'settings') {

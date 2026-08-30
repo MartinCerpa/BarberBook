@@ -1,0 +1,162 @@
+import { formatCurrency } from '../../utils/formatters'
+
+const shortDateFormatter = new Intl.DateTimeFormat('es-CL', {
+  day: 'numeric',
+  month: 'short',
+})
+
+const longDateFormatter = new Intl.DateTimeFormat('es-CL', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+})
+
+const formatDate = (date, formatter) =>
+  date
+    ? formatter.format(new Date(`${date}T12:00:00`)).replace('.', '')
+    : 'Sin visitas aún'
+
+const getInitials = (name) =>
+  name
+    .split(' ')
+    .slice(0, 2)
+    .map((part) => part.charAt(0))
+    .join('')
+
+const getClientStatus = (client) => {
+  if (client.completedAppointments === 0) {
+    return { id: 'new', label: 'Nuevo' }
+  }
+
+  if (client.completedAppointments > 1) {
+    return { id: 'recurring', label: 'Recurrente' }
+  }
+
+  return { id: 'first-visit', label: 'Primera visita' }
+}
+
+function ChevronIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m8 10 4 4 4-4" />
+    </svg>
+  )
+}
+
+function ClientCard({ client, isExpanded, onToggle }) {
+  const status = getClientStatus(client)
+  const detailsId = `client-details-${client.id}`
+  const phoneHref = client.phone.replace(/\s/g, '')
+
+  return (
+    <article className={`client-card${isExpanded ? ' is-expanded' : ''}`}>
+      <button
+        className="client-card__toggle"
+        type="button"
+        aria-expanded={isExpanded}
+        aria-controls={detailsId}
+        onClick={onToggle}
+      >
+        <span className="client-card__topline">
+          <span className="client-avatar" aria-hidden="true">
+            {getInitials(client.name)}
+          </span>
+          <span className="client-card__identity">
+            <strong>{client.name}</strong>
+            <small>{client.phone}</small>
+          </span>
+          <span className={`client-card__status client-card__status--${status.id}`}>
+            {status.label}
+          </span>
+          <span className="client-card__chevron">
+            <ChevronIcon />
+          </span>
+        </span>
+
+        <dl className="client-card__summary">
+          <div>
+            <dt>Última visita</dt>
+            <dd>{formatDate(client.lastVisit, shortDateFormatter)}</dd>
+          </div>
+          <div>
+            <dt>Atenciones</dt>
+            <dd>{client.completedAppointments}</dd>
+          </div>
+          <div>
+            <dt>Servicio habitual</dt>
+            <dd>{client.favoriteService}</dd>
+          </div>
+        </dl>
+
+        {client.nextAppointment && (
+          <span className="client-card__next">
+            <span>Próxima</span>
+            <strong>
+              {formatDate(client.nextAppointment.date, shortDateFormatter)} ·{' '}
+              {client.nextAppointment.time}
+            </strong>
+          </span>
+        )}
+      </button>
+
+      {isExpanded && (
+        <div
+          className="client-details"
+          id={detailsId}
+          role="region"
+          aria-label={`Detalle de ${client.name}`}
+        >
+          <div className="client-details__metrics">
+            <div>
+              <span>Reservas</span>
+              <strong>{client.totalAppointments}</strong>
+            </div>
+            <div>
+              <span>Completadas</span>
+              <strong>{client.completedAppointments}</strong>
+            </div>
+            <div>
+              <span>Gasto acumulado</span>
+              <strong>{formatCurrency(client.totalSpent)}</strong>
+            </div>
+          </div>
+
+          <dl className="client-details__list">
+            <div>
+              <dt>Última visita</dt>
+              <dd>{formatDate(client.lastVisit, longDateFormatter)}</dd>
+            </div>
+            <div>
+              <dt>Servicio habitual</dt>
+              <dd>{client.favoriteService}</dd>
+            </div>
+            {client.nextAppointment && (
+              <div>
+                <dt>Próxima reserva</dt>
+                <dd>
+                  {formatDate(client.nextAppointment.date, longDateFormatter)} ·{' '}
+                  {client.nextAppointment.time}
+                  <span>{client.nextAppointment.service}</span>
+                </dd>
+              </div>
+            )}
+          </dl>
+
+          {client.notes && (
+            <p className="client-details__note">
+              <span>Nota</span>
+              {client.notes}
+            </p>
+          )}
+
+          <a className="client-details__phone" href={`tel:${phoneHref}`}>
+            Llamar a {client.phone}
+            <span aria-hidden="true">→</span>
+          </a>
+        </div>
+      )}
+    </article>
+  )
+}
+
+export default ClientCard

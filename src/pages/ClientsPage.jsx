@@ -1,0 +1,165 @@
+import { useMemo, useState } from 'react'
+import ClientCard from '../components/admin/ClientCard'
+import { clients, clientsReferenceDate } from '../data/clients'
+
+const referenceDate = new Date(`${clientsReferenceDate}T12:00:00`)
+
+const isNewThisMonth = (client) => {
+  const createdAt = new Date(`${client.createdAt}T12:00:00`)
+
+  return (
+    createdAt.getFullYear() === referenceDate.getFullYear() &&
+    createdAt.getMonth() === referenceDate.getMonth()
+  )
+}
+
+const clientFilters = [
+  { id: 'all', label: 'Total clientes', matches: () => true },
+  {
+    id: 'recurring',
+    label: 'Recurrentes',
+    matches: (client) => client.completedAppointments > 1,
+  },
+  {
+    id: 'new-this-month',
+    label: 'Nuevos este mes',
+    matches: isNewThisMonth,
+  },
+]
+
+const normalizeText = (value) =>
+  value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLocaleLowerCase('es-CL')
+    .trim()
+
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m16 16 4 4" />
+    </svg>
+  )
+}
+
+function ClientsPage() {
+  const [query, setQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState('all')
+  const [expandedClientId, setExpandedClientId] = useState(null)
+
+  const filterCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        clientFilters.map((filter) => [
+          filter.id,
+          clients.filter(filter.matches).length,
+        ]),
+      ),
+    [],
+  )
+
+  const visibleClients = useMemo(() => {
+    const selectedFilter = clientFilters.find(
+      (filter) => filter.id === activeFilter,
+    )
+    const clientsInFilter = clients.filter(selectedFilter.matches)
+    const normalizedQuery = normalizeText(query)
+    const phoneQuery = query.replace(/\D/g, '')
+
+    if (!normalizedQuery) {
+      return clientsInFilter
+    }
+
+    return clientsInFilter.filter(
+      (client) =>
+        normalizeText(client.name).includes(normalizedQuery) ||
+        (phoneQuery.length > 0 &&
+          client.phone.replace(/\D/g, '').includes(phoneQuery)),
+    )
+  }, [activeFilter, query])
+
+  const clearSearch = () => {
+    setQuery('')
+    setExpandedClientId(null)
+  }
+
+  return (
+    <div className="admin-page clients-page">
+      <header className="admin-page__heading">
+        <div>
+          <p className="eyebrow">Relaciones con clientes</p>
+          <h1>Clientes</h1>
+          <p>Consulta visitas, preferencias y próximas atenciones.</p>
+        </div>
+      </header>
+
+      <section className="clients-summary" aria-label="Filtrar clientes">
+        {clientFilters.map((filter) => (
+          <button
+            type="button"
+            aria-pressed={activeFilter === filter.id}
+            onClick={() => {
+              setActiveFilter(filter.id)
+              setExpandedClientId(null)
+            }}
+            key={filter.id}
+          >
+            <strong>{filterCounts[filter.id]}</strong>
+            <span>{filter.label}</span>
+          </button>
+        ))}
+      </section>
+
+      <div className="clients-toolbar">
+        <label className="clients-search">
+          <span className="sr-only">Buscar clientes por nombre o teléfono</span>
+          <SearchIcon />
+          <input
+            type="search"
+            value={query}
+            placeholder="Buscar por nombre o teléfono"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          {query && (
+            <button type="button" onClick={clearSearch} aria-label="Limpiar búsqueda">
+              ×
+            </button>
+          )}
+        </label>
+        <p aria-live="polite">
+          {visibleClients.length}{' '}
+          {visibleClients.length === 1 ? 'cliente' : 'clientes'}
+        </p>
+      </div>
+
+      {visibleClients.length > 0 ? (
+        <section className="clients-list" aria-label="Listado de clientes">
+          {visibleClients.map((client) => (
+            <ClientCard
+              client={client}
+              isExpanded={expandedClientId === client.id}
+              onToggle={() =>
+                setExpandedClientId((currentId) =>
+                  currentId === client.id ? null : client.id,
+                )
+              }
+              key={client.id}
+            />
+          ))}
+        </section>
+      ) : (
+        <div className="clients-empty" role="status">
+          <span aria-hidden="true">BB</span>
+          <strong>No encontramos clientes con esa búsqueda.</strong>
+          <p>Prueba con otro nombre o con algunos dígitos del teléfono.</p>
+          <button type="button" onClick={clearSearch}>
+            Limpiar búsqueda
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default ClientsPage
