@@ -1961,6 +1961,657 @@
   margin-bottom: 0.35rem;
 }
 
+.settings-hub {
+  max-width: 60rem;
+}
+
+.settings-hub > .admin-page__heading {
+  margin-bottom: 1rem;
+}
+
+.settings-hub > .admin-page__heading h1 {
+  font-size: clamp(2.55rem, 7vw, 4rem);
+}
+
+.settings-hub__grid {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.settings-hub__option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+  min-height: 6rem;
+  padding: 0.9rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-card);
+  text-align: left;
+  animation: admin-card-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.settings-hub__option:nth-child(2) {
+  animation-delay: 45ms;
+}
+
+.settings-hub__option:nth-child(3) {
+  animation-delay: 90ms;
+}
+
+.settings-hub__option:nth-child(4) {
+  animation-delay: 135ms;
+}
+
+.settings-hub__option:nth-child(5) {
+  animation-delay: 180ms;
+}
+
+button.settings-hub__option {
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.settings-hub__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.settings-hub__copy strong {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+.settings-hub__copy small {
+  margin-top: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.67rem;
+  line-height: 1.45;
+}
+
+.settings-hub__arrow {
+  color: var(--color-accent);
+  font-size: 1.1rem;
+  transition: transform var(--transition);
+}
+
+.settings-hub__option.is-future {
+  background: color-mix(in srgb, var(--color-surface) 84%, var(--color-background));
+}
+
+.settings-hub__option .settings-option__badge {
+  grid-column: 3;
+}
+
+.settings-subview__back {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    color var(--transition),
+    transform var(--transition);
+}
+
+.services-page {
+  max-width: 66rem;
+}
+
+.services-page__heading {
+  margin-bottom: 1rem;
+}
+
+.services-page__heading h1 {
+  font-size: clamp(2.55rem, 7vw, 4rem);
+}
+
+.services-page__loading {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.services-page__feedback {
+  min-height: 1.6rem;
+  margin-bottom: 0.45rem;
+}
+
+.services-page__feedback p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.66rem;
+}
+
+.services-page__feedback p[data-type='success'] {
+  color: var(--color-success);
+}
+
+.services-page__feedback p[data-type='error'] {
+  color: var(--color-error);
+}
+
+.services-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.55rem;
+  margin-bottom: 0.85rem;
+}
+
+.services-summary > div {
+  display: flex;
+  min-width: 0;
+  min-height: 5.5rem;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.8rem;
+  border: 1px solid var(--color-border);
+  border-radius: 1rem;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  animation: admin-card-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.services-summary > div:nth-child(2) {
+  animation-delay: 55ms;
+}
+
+.services-summary > div:nth-child(3) {
+  animation-delay: 110ms;
+}
+
+.services-summary strong {
+  color: var(--color-accent);
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.services-summary span {
+  color: var(--color-text-muted);
+  font-size: 0.57rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  line-height: 1.25;
+  text-transform: uppercase;
+}
+
+.services-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.service-card {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  animation: admin-card-enter 420ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    opacity var(--transition),
+    transform var(--transition);
+}
+
+.service-card.is-inactive:not(.is-editing) {
+  opacity: 0.76;
+}
+
+.service-card.is-editing {
+  border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--color-accent) 10%, transparent),
+    var(--shadow-card);
+}
+
+.service-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.service-card__heading > div {
+  min-width: 0;
+}
+
+.service-card__heading > div > span {
+  color: var(--color-text-muted);
+  font-size: 0.55rem;
+  font-weight: 850;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.service-card__heading h2 {
+  margin: 0.18rem 0 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.1;
+}
+
+.service-card__heading > button,
+.service-card__save-actions > button:first-child,
+.service-card__delete-confirmation button,
+.services-restore-confirmation button {
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-size: 0.64rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    color var(--transition),
+    transform var(--transition);
+}
+
+.service-card__details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.service-card__details > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 0.8rem;
+  background: var(--color-background);
+}
+
+.service-card__details small {
+  color: var(--color-text-muted);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.service-card__details strong {
+  overflow: hidden;
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.service-card__states {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+}
+
+.service-card__state {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--color-surface-strong);
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.58rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    color var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+.service-card__state[data-state='active'] {
+  background: var(--color-success-surface);
+  color: var(--color-success);
+}
+
+.service-card__state[data-state='inactive'] {
+  background: var(--color-error-surface);
+  color: var(--color-error);
+}
+
+.service-card__state:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.service-card__state:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.service-card__editor {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 0.85rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--color-border);
+  animation: admin-card-enter 280ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.service-card__fields {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.service-field {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+.service-field > span {
+  color: var(--color-text-muted);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.service-field input,
+.service-field__price {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.8rem;
+  background: var(--color-background);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.75rem;
+}
+
+.service-field > input {
+  padding: 0.65rem 0.75rem;
+}
+
+.service-field__price {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  padding-left: 0.75rem;
+}
+
+.service-field__price > span {
+  color: var(--color-text-muted);
+  font-weight: 800;
+}
+
+.service-field__price input {
+  min-height: 2.65rem;
+  padding: 0.65rem 0.75rem 0.65rem 0.35rem;
+  border: 0;
+  background: transparent;
+}
+
+.service-field input:focus-visible,
+.service-field__price:has(input:focus-visible) {
+  border-color: var(--color-accent);
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 18%, transparent);
+  outline-offset: 1px;
+}
+
+.service-field__price input:focus-visible {
+  outline: 0;
+}
+
+.service-card__toggles {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.service-toggle {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.75rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.85rem;
+  background: var(--color-background);
+  cursor: pointer;
+}
+
+.service-toggle > span:first-child {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.service-toggle strong {
+  font-size: 0.68rem;
+}
+
+.service-toggle small {
+  margin-top: 0.15rem;
+  color: var(--color-text-muted);
+  font-size: 0.58rem;
+  line-height: 1.35;
+}
+
+.service-toggle input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+
+.service-toggle__control {
+  position: relative;
+  width: 2.65rem;
+  height: 1.45rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-strong);
+  transition:
+    border-color var(--transition),
+    background-color var(--transition),
+    box-shadow var(--transition);
+}
+
+.service-toggle__control::after {
+  position: absolute;
+  top: 0.18rem;
+  left: 0.2rem;
+  width: 0.95rem;
+  height: 0.95rem;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  content: '';
+  transition:
+    background-color var(--transition),
+    transform var(--transition);
+}
+
+.service-toggle input:checked + .service-toggle__control {
+  border-color: color-mix(in srgb, var(--color-accent) 70%, var(--color-border));
+  background: color-mix(in srgb, var(--color-accent) 24%, var(--color-surface));
+}
+
+.service-toggle input:checked + .service-toggle__control::after {
+  background: var(--color-accent);
+  transform: translateX(1.18rem);
+}
+
+.service-toggle input:focus-visible + .service-toggle__control {
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.service-toggle.is-disabled {
+  opacity: 0.52;
+  cursor: not-allowed;
+}
+
+.service-card__error {
+  margin: 0;
+  color: var(--color-error);
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+
+.service-card__editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.service-card__editor-actions > small {
+  max-width: 19rem;
+  color: var(--color-text-muted);
+  font-size: 0.58rem;
+}
+
+.service-card__save-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+  margin-left: auto;
+}
+
+.service-card__save-actions .button,
+.service-card__save-actions > button:first-child {
+  min-height: 2.65rem;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.66rem;
+}
+
+.service-card__delete-trigger {
+  min-height: 2.5rem;
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-error);
+  font-size: 0.63rem;
+  font-weight: 800;
+  text-decoration: underline;
+  text-underline-offset: 0.2rem;
+  cursor: pointer;
+}
+
+.service-card__delete-confirmation,
+.services-restore-confirmation {
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--color-error) 35%, var(--color-border));
+  border-radius: 0.9rem;
+  background: var(--color-error-surface);
+}
+
+.service-card__delete-confirmation p,
+.services-restore-confirmation p {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.62rem;
+}
+
+.service-card__delete-confirmation p strong,
+.services-restore-confirmation strong {
+  display: block;
+  margin-bottom: 0.15rem;
+  color: var(--color-text);
+  font-size: 0.7rem;
+}
+
+.service-card__delete-confirmation > div,
+.services-restore-confirmation > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.service-card__delete-confirmation button:last-child,
+.services-restore-confirmation button:last-child {
+  border-color: color-mix(in srgb, var(--color-error) 55%, var(--color-border));
+  color: var(--color-error);
+}
+
+.services-restore-confirmation {
+  margin-top: 0.85rem;
+  background: color-mix(in srgb, var(--color-error-surface) 72%, var(--color-surface));
+}
+
+.services-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  align-items: stretch;
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.services-actions__restore {
+  min-height: 2.75rem;
+  padding: 0.6rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.67rem;
+  font-weight: 750;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 0.2rem;
+  cursor: pointer;
+}
+
+.service-card__heading > button:focus-visible,
+.service-card__editor-actions button:focus-visible,
+.service-card__state:focus-visible,
+.service-card__delete-confirmation button:focus-visible,
+.service-card__delete-trigger:focus-visible,
+.services-restore-confirmation button:focus-visible,
+.services-actions__restore:focus-visible,
+.settings-hub__option:focus-visible,
+.settings-subview__back:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-accent) 55%, transparent);
+  outline-offset: 2px;
+}
+
 .clients-page > .admin-page__heading {
   margin-bottom: 1rem;
 }
@@ -2538,6 +3189,42 @@
 }
 
 @media (hover: hover) {
+  button.settings-hub__option:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 40%, var(--color-border));
+    box-shadow: 0 20px 42px color-mix(in srgb, var(--color-text) 9%, transparent);
+    transform: translateY(-2px);
+  }
+
+  button.settings-hub__option:hover .settings-hub__arrow {
+    transform: translateX(3px);
+  }
+
+  .settings-subview__back:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    transform: translateX(-2px);
+  }
+
+  .service-card:hover {
+    border-color: color-mix(in srgb, var(--color-accent) 32%, var(--color-border));
+    transform: translateY(-2px);
+  }
+
+  .service-card__heading > button:hover,
+  .service-card__save-actions > button:first-child:hover,
+  .service-card__delete-confirmation button:hover,
+  .services-restore-confirmation button:hover {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+    transform: translateY(-1px);
+  }
+
+  .service-card__state:hover:not(:disabled) {
+    border-color: color-mix(in srgb, currentColor 35%, transparent);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--color-text) 8%, transparent);
+    transform: translateY(-1px);
+  }
+
   .clients-summary button:hover {
     border-color: color-mix(in srgb, var(--color-accent) 45%, var(--color-border));
     transform: translateY(-2px);
@@ -2611,6 +3298,129 @@
 }
 
 @media (max-width: 35.999rem) {
+  .settings-hub > .admin-page__heading {
+    margin-bottom: 0.75rem;
+  }
+
+  .settings-hub > .admin-page__heading h1 {
+    font-size: 2.45rem;
+  }
+
+  .settings-hub > .admin-page__heading > div > p:last-child {
+    margin-top: 0.4rem;
+    font-size: 0.68rem;
+    line-height: 1.35;
+  }
+
+  .settings-hub__option {
+    min-height: 5.25rem;
+    padding: 0.75rem;
+    border-radius: 1rem;
+  }
+
+  .settings-hub__option .settings-option__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  .settings-hub__copy strong {
+    font-size: 1.05rem;
+  }
+
+  .settings-hub__copy small {
+    font-size: 0.62rem;
+  }
+
+  .settings-hub__option.is-future {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .settings-hub__option.is-future .settings-option__badge {
+    grid-row: 2;
+    grid-column: 2;
+  }
+
+  .services-page__heading {
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .services-page__heading .eyebrow {
+    margin-bottom: 0.3rem;
+  }
+
+  .services-page__heading h1 {
+    font-size: 2.45rem;
+  }
+
+  .services-page__heading > div > p:last-child {
+    margin-top: 0.4rem;
+    font-size: 0.68rem;
+    line-height: 1.35;
+  }
+
+  .services-page__heading .button {
+    min-height: 2.8rem;
+  }
+
+  .services-summary > div {
+    min-height: 4.75rem;
+    padding: 0.65rem;
+    border-radius: 0.85rem;
+  }
+
+  .services-summary strong {
+    font-size: 1.5rem;
+  }
+
+  .services-summary span {
+    font-size: 0.5rem;
+  }
+
+  .service-card {
+    padding: 0.85rem;
+    border-radius: 1rem;
+  }
+
+  .service-card__heading h2 {
+    font-size: 1.15rem;
+  }
+
+  .service-card__details {
+    margin-top: 0.65rem;
+  }
+
+  .service-card__states {
+    margin-top: 0.55rem;
+  }
+
+  .service-card__editor {
+    margin-top: 0.7rem;
+    padding-top: 0.7rem;
+  }
+
+  .service-toggle {
+    min-height: 3.5rem;
+  }
+
+  .service-card__editor-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .service-card__save-actions {
+    display: grid;
+    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-left: 0;
+  }
+
+  .service-card__save-actions .button,
+  .service-card__save-actions > button:first-child {
+    width: 100%;
+    padding-inline: 0.5rem;
+  }
+
   .clients-page > .admin-page__heading {
     margin-bottom: 0.7rem;
   }
@@ -3222,6 +4032,39 @@
 }
 
 @media (min-width: 52rem) {
+  .settings-hub__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .services-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .service-card.is-editing {
+    grid-column: 1 / -1;
+  }
+
+  .service-card__fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .service-field--wide {
+    grid-column: 1 / -1;
+  }
+
+  .service-card__toggles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .services-actions {
+    align-items: flex-start;
+  }
+
+  .services-restore-confirmation {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
   .profile-settings__section {
     grid-template-columns: minmax(11rem, 0.42fr) minmax(0, 1fr);
     gap: 1.5rem;

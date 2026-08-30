@@ -4,27 +4,36 @@ import {
   clearProfilePreferences,
   saveProfilePreferences,
 } from '../services/profilePreferencesService.js'
+import ServicesPage from './ServicesPage'
 
-const futureSettingsItems = [
+const functionalSettingsItems = [
+  {
+    id: 'profile',
+    title: 'Mi perfil',
+    description: 'Administra tu identidad e información pública.',
+  },
   {
     id: 'services',
     title: 'Servicios',
-    description: 'Catálogo, duración y valores que se ofrecen durante la reserva.',
+    description: 'Administra servicios, precios y disponibilidad.',
   },
+]
+
+const futureSettingsItems = [
   {
     id: 'hours',
     title: 'Horarios',
-    description: 'Jornada habitual, descansos y disponibilidad general.',
+    description: 'Configura tus días y horas de atención.',
   },
   {
     id: 'bookings',
     title: 'Reservas',
-    description: 'Criterios de confirmación, anticipación y reglas del flujo.',
+    description: 'Define reglas de reserva, anticipación y cancelaciones.',
   },
   {
     id: 'preferences',
     title: 'Preferencias',
-    description: 'Experiencia del panel, avisos y preferencias personales.',
+    description: 'Personaliza otras opciones de tu cuenta.',
   },
 ]
 
@@ -113,7 +122,16 @@ function ProfileImagePreview({ label, name, src, variant }) {
   )
 }
 
-function SettingsPage() {
+function SettingsBackButton({ onBack }) {
+  return (
+    <button className="settings-subview__back" type="button" onClick={onBack}>
+      <span aria-hidden="true">←</span>
+      Volver a Ajustes
+    </button>
+  )
+}
+
+function ProfileSettingsView({ onBack }) {
   const [formData, setFormData] = useState(null)
   const [savedData, setSavedData] = useState(null)
   const [profileMedia, setProfileMedia] = useState(null)
@@ -259,14 +277,17 @@ function SettingsPage() {
 
   if (!formData) {
     return (
-      <div className="admin-page settings-page">
+      <div className="admin-page settings-page settings-subview">
+        <SettingsBackButton onBack={onBack} />
         <p className="profile-settings__loading">Cargando perfil…</p>
       </div>
     )
   }
 
   return (
-    <div className="admin-page settings-page">
+    <div className="admin-page settings-page settings-subview">
+      <SettingsBackButton onBack={onBack} />
+
       <header className="admin-page__heading">
         <div>
           <p className="eyebrow">Identidad profesional</p>
@@ -500,29 +521,71 @@ function SettingsPage() {
           </button>
         </footer>
       </form>
+    </div>
+  )
+}
 
-      <section className="settings-future" aria-labelledby="future-settings-title">
-        <header>
-          <p className="eyebrow">Próximas etapas</p>
-          <h2 id="future-settings-title">Otras configuraciones</h2>
-        </header>
-        <div className="settings-grid" aria-label="Áreas de configuración futuras">
-        {futureSettingsItems.map((item) => (
-          <article className="settings-option" key={item.id}>
+function SettingsOverview({ onSelect }) {
+  return (
+    <div className="admin-page settings-page settings-hub">
+      <header className="admin-page__heading">
+        <div>
+          <p className="eyebrow">Configuración profesional</p>
+          <h1>Ajustes</h1>
+          <p>Gestiona tu identidad y cómo funciona tu perfil.</p>
+        </div>
+      </header>
+
+      <section className="settings-hub__grid" aria-label="Áreas de Ajustes">
+        {functionalSettingsItems.map((item) => (
+          <button
+            className="settings-hub__option is-functional"
+            type="button"
+            onClick={() => onSelect(item.id)}
+            key={item.id}
+          >
             <span className="settings-option__icon">
               <SettingsIcon section={item.id} />
             </span>
-            <div>
-              <h2>{item.title}</h2>
-              <p>{item.description}</p>
-            </div>
+            <span className="settings-hub__copy">
+              <strong>{item.title}</strong>
+              <small>{item.description}</small>
+            </span>
+            <span className="settings-hub__arrow" aria-hidden="true">→</span>
+          </button>
+        ))}
+
+        {futureSettingsItems.map((item) => (
+          <article className="settings-hub__option is-future" key={item.id}>
+            <span className="settings-option__icon">
+              <SettingsIcon section={item.id} />
+            </span>
+            <span className="settings-hub__copy">
+              <strong>{item.title}</strong>
+              <small>{item.description}</small>
+            </span>
             <span className="settings-option__badge">Próximamente</span>
           </article>
         ))}
-        </div>
       </section>
     </div>
   )
+}
+
+function SettingsPage() {
+  const [activeView, setActiveView] = useState('overview')
+
+  if (activeView === 'profile') {
+    return <ProfileSettingsView onBack={() => setActiveView('overview')} />
+  }
+
+  if (activeView === 'services') {
+    return (
+      <ServicesPage embedded onBack={() => setActiveView('overview')} />
+    )
+  }
+
+  return <SettingsOverview onSelect={setActiveView} />
 }
 
 export default SettingsPage

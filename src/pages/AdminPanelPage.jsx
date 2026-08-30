@@ -6,6 +6,7 @@ import AdminPlaceholderPage from './AdminPlaceholderPage'
 import ClientsPage from './ClientsPage'
 import RequestsPage from './RequestsPage'
 import SchedulePage from './SchedulePage'
+import ServicesPage from './ServicesPage'
 import SettingsPage from './SettingsPage'
 import { isHistoricalRequest } from '../utils/requestUtils'
 
@@ -134,6 +135,10 @@ function AdminPanelPage({ activeSection }) {
 
     if (activeSection === 'clients') {
       return <ClientsPage />
+    }
+
+    if (activeSection === 'services') {
+      return <ServicesPage />
     }
 
     if (activeSection === 'settings') {

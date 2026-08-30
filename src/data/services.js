@@ -5,6 +5,9 @@ export const services = [
     description: 'Corte personalizado y terminaciones cuidadas.',
     price: 12000,
     duration: 45,
+    active: true,
+    publicVisible: false,
+    publicPriceVisible: false,
   },
   {
     id: 'haircut-beard',
@@ -12,6 +15,9 @@ export const services = [
     description: 'Servicio completo para renovar tu estilo.',
     price: 16000,
     duration: 60,
+    active: true,
+    publicVisible: false,
+    publicPriceVisible: false,
   },
   {
     id: 'beard',
@@ -19,5 +25,8 @@ export const services = [
     description: 'Perfilado, rebaje y acabado profesional.',
     price: 8000,
     duration: 30,
+    active: true,
+    publicVisible: false,
+    publicPriceVisible: false,
   },
 ]

@@ -4,10 +4,10 @@ import PortfolioSection from '../components/public/PortfolioSection'
 import ProfileHero from '../components/public/ProfileHero'
 import { business } from '../data/business'
 import { professional } from '../data/professional'
-import { services } from '../data/services'
 import PublicLayout from '../layouts/PublicLayout'
 import { getFeaturedPortfolioItems } from '../services/portfolioService'
 import { getPublicProfile } from '../services/professionalService'
+import { getActiveServices } from '../services/serviceService'
 
 function CalendarIcon() {
   return (
@@ -23,6 +23,7 @@ function PublicBarberPage() {
   const [showMobileCta, setShowMobileCta] = useState(false)
   const [publicProfile, setPublicProfile] = useState({ business, professional })
   const [featuredWork, setFeaturedWork] = useState([])
+  const [bookingServices, setBookingServices] = useState([])
   const primaryCtaRef = useRef(null)
 
   useEffect(() => {
@@ -30,11 +31,15 @@ function PublicBarberPage() {
 
     const loadPublicProfile = async () => {
       const profile = await getPublicProfile()
-      const portfolio = await getFeaturedPortfolioItems(profile.professional.id)
+      const [portfolio, activeServices] = await Promise.all([
+        getFeaturedPortfolioItems(profile.professional.id),
+        getActiveServices(),
+      ])
 
       if (isActive) {
         setPublicProfile(profile)
         setFeaturedWork(portfolio)
+        setBookingServices(activeServices)
       }
     }
 
@@ -103,7 +108,10 @@ function PublicBarberPage() {
   if (isBooking) {
     return (
       <PublicLayout>
-        <BookingFlow services={services} onExit={() => changeView(false)} />
+        <BookingFlow
+          services={bookingServices}
+          onExit={() => changeView(false)}
+        />
       </PublicLayout>
     )
   }

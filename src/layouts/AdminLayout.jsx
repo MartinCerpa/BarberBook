@@ -7,6 +7,7 @@ const sectionLabels = {
   requests: 'Solicitudes',
   schedule: 'Agenda',
   clients: 'Clientes',
+  services: 'Servicios',
   settings: 'Configuración',
 }
 

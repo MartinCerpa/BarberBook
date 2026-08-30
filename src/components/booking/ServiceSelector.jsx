@@ -14,33 +14,40 @@ function ServiceSelector({ services, selectedId, onSelect, onBack, onNext }) {
 
         <fieldset className="booking-options booking-options--services">
           <legend className="sr-only">Selecciona un servicio</legend>
-          {services.map((service) => {
-            const isSelected = selectedId === service.id
+          {services.length ? (
+            services.map((service) => {
+              const isSelected = selectedId === service.id
 
-            return (
-              <label
-                className={`booking-option service-option${isSelected ? ' is-selected' : ''}`}
-                key={service.id}
-              >
-                <input
-                  type="radio"
-                  name="booking-service"
-                  value={service.id}
-                  checked={isSelected}
-                  onChange={() => onSelect(service.id)}
-                />
-                <span className="booking-option__check" aria-hidden="true" />
-                <strong>{service.name}</strong>
-                <span className="service-option__description">
-                  {service.description}
-                </span>
-                <span className="service-option__details">
-                  <b>{formatCurrency(service.price)}</b>
-                  <span>{service.duration} min aprox.</span>
-                </span>
-              </label>
-            )
-          })}
+              return (
+                <label
+                  className={`booking-option service-option${isSelected ? ' is-selected' : ''}`}
+                  key={service.id}
+                >
+                  <input
+                    type="radio"
+                    name="booking-service"
+                    value={service.id}
+                    checked={isSelected}
+                    onChange={() => onSelect(service.id)}
+                  />
+                  <span className="booking-option__check" aria-hidden="true" />
+                  <strong>{service.name}</strong>
+                  <span className="service-option__description">
+                    {service.description}
+                  </span>
+                  <span className="service-option__details">
+                    <b>{formatCurrency(service.price)}</b>
+                    <span>{service.duration} min aprox.</span>
+                  </span>
+                </label>
+              )
+            })
+          ) : (
+            <div className="booking-options__empty" role="status">
+              <strong>No hay servicios disponibles por ahora.</strong>
+              <p>Vuelve más tarde o contacta directamente al profesional.</p>
+            </div>
+          )}
         </fieldset>
 
         <div className="booking-actions booking-actions--services">
