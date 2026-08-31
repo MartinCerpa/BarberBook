@@ -1,10 +1,9 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import ClientCard from '../components/admin/ClientCard'
-import { clients, clientsReferenceDate } from '../data/clients'
-
-const referenceDate = new Date(`${clientsReferenceDate}T12:00:00`)
+import { getCustomersSnapshot, setClientTrustStatus, subscribeCustomers } from '../services/customerService'
 
 const isNewThisMonth = (client) => {
+  const referenceDate = new Date()
   const createdAt = new Date(`${client.createdAt}T12:00:00`)
 
   return (
@@ -44,6 +43,9 @@ function SearchIcon() {
 }
 
 function ClientsPage() {
+  const [clients, setClients] = useState(getCustomersSnapshot)
+  const [feedback, setFeedback] = useState(null)
+  useEffect(() => subscribeCustomers(() => setClients(getCustomersSnapshot())), [])
   const [query, setQuery] = useState('')
   const [activeFilter, setActiveFilter] = useState('all')
   const [expandedClientId, setExpandedClientId] = useState(null)
@@ -56,7 +58,7 @@ function ClientsPage() {
           clients.filter(filter.matches).length,
         ]),
       ),
-    [],
+    [clients],
   )
 
   const visibleClients = useMemo(() => {
@@ -77,7 +79,7 @@ function ClientsPage() {
         (phoneQuery.length > 0 &&
           client.phone.replace(/\D/g, '').includes(phoneQuery)),
     )
-  }, [activeFilter, query])
+  }, [activeFilter, query, clients])
 
   const clearSearch = () => {
     setQuery('')
@@ -133,12 +135,19 @@ function ClientsPage() {
         </p>
       </div>
 
+      {feedback && <p className="clients-feedback" role="status">{feedback}</p>}
+
       {visibleClients.length > 0 ? (
         <section className="clients-list" aria-label="Listado de clientes">
           {visibleClients.map((client) => (
             <ClientCard
               client={client}
               isExpanded={expandedClientId === client.id}
+              onRestoreTrust={async () => {
+                const result = await setClientTrustStatus(client.id, 'normal')
+                setFeedback(result.success ? `${client.name} vuelve a estado normal. Su historial se conserva.`
+                  : 'No pudimos guardar el cambio en este navegador.')
+              }}
               onToggle={() =>
                 setExpandedClientId((currentId) =>
                   currentId === client.id ? null : client.id,

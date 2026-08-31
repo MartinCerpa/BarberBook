@@ -1,4 +1,6 @@
 import { formatCurrency } from '../../utils/formatters'
+import { formatCustomerPhone } from '../../utils/customerUtils'
+import { outcomeLabels } from '../../services/bookingService'
 
 const shortDateFormatter = new Intl.DateTimeFormat('es-CL', {
   day: 'numeric',
@@ -43,7 +45,7 @@ function ChevronIcon() {
   )
 }
 
-function ClientCard({ client, isExpanded, onToggle }) {
+function ClientCard({ client, isExpanded, onToggle, onRestoreTrust }) {
   const status = getClientStatus(client)
   const detailsId = `client-details-${client.id}`
   const phoneHref = client.phone.replace(/\s/g, '')
@@ -63,7 +65,7 @@ function ClientCard({ client, isExpanded, onToggle }) {
           </span>
           <span className="client-card__identity">
             <strong>{client.name}</strong>
-            <small>{client.phone}</small>
+            <small>{formatCustomerPhone(client.phone)}</small>
           </span>
           <span className={`client-card__status client-card__status--${status.id}`}>
             {status.label}
@@ -72,6 +74,10 @@ function ClientCard({ client, isExpanded, onToggle }) {
             <ChevronIcon />
           </span>
         </span>
+
+        {client.trustStatus === 'requires_manual_approval' && (
+          <span className="client-trust-label">Requiere aprobación manual</span>
+        )}
 
         <dl className="client-card__summary">
           <div>
@@ -142,6 +148,28 @@ function ClientCard({ client, isExpanded, onToggle }) {
             )}
           </dl>
 
+          <div className="client-trust" data-status={client.trustStatus}>
+            <div><span>Inasistencias</span><strong>{client.noShows}</strong></div>
+            <p>{client.trustStatus === 'requires_manual_approval' ? 'Requiere aprobación manual' : 'Cliente normal'}</p>
+            {client.trustStatus === 'requires_manual_approval' && (
+              <button type="button" onClick={onRestoreTrust}>Marcar como cliente normal</button>
+            )}
+          </div>
+
+          <section className="client-history" aria-label={`Historial de ${client.name}`}>
+            <h3>Historial de atenciones</h3>
+            {client.history.length ? (
+              <ol tabIndex={0} aria-label="Atenciones registradas">{client.history.map((entry) => (
+                <li key={entry.appointmentId}>
+                  <div><time dateTime={`${entry.date}T${entry.time}`}>{formatDate(entry.date, shortDateFormatter)} · {entry.time}</time>
+                    <span className={`status-badge status-badge--${entry.outcome}`}>{outcomeLabels[entry.outcome]}</span></div>
+                  <strong>{entry.service}</strong>
+                  <span>{entry.price === null ? 'Precio no registrado' : formatCurrency(entry.price)}</span>
+                </li>
+              ))}</ol>
+            ) : <p>Aún no hay resultados de atención registrados.</p>}
+          </section>
+
           {client.notes && (
             <p className="client-details__note">
               <span>Nota</span>
@@ -149,10 +177,10 @@ function ClientCard({ client, isExpanded, onToggle }) {
             </p>
           )}
 
-          <a className="client-details__phone" href={`tel:${phoneHref}`}>
-            Llamar a {client.phone}
+          {client.phone && <a className="client-details__phone" href={`tel:${phoneHref}`}>
+            Llamar a {formatCustomerPhone(client.phone)}
             <span aria-hidden="true">→</span>
-          </a>
+          </a>}
         </div>
       )}
     </article>

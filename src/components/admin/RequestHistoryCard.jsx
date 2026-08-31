@@ -6,6 +6,7 @@ const statusLabels = {
   rejected: 'Rechazada',
   cancelled: 'Cancelada',
   completed: 'Completada',
+  no_show: 'No asistió',
 }
 
 function RequestHistoryCard({ request, context }) {

@@ -18,6 +18,7 @@ const historyFilters = [
   { id: 'past', label: 'Pasadas' },
   { id: 'cancelled', label: 'Canceladas' },
   { id: 'completed', label: 'Completadas' },
+  { id: 'no_show', label: 'No asistió' },
 ]
 
 function RequestsPage({
@@ -205,7 +206,7 @@ function RequestsPage({
         </div>
         {activeView === 'upcoming' && !focusedSlot && (
           <p>
-            Referencia simulada: hoy a las {requestContext.currentTime}
+            Según la fecha y hora actual de este dispositivo.
           </p>
         )}
       </div>
@@ -239,9 +240,9 @@ function RequestsPage({
           aria-live="polite"
         >
           <span>{feedback.message}</span>
-          <button type="button" onClick={onUndo}>
+          {feedback.undoToken && <button type="button" onClick={onUndo}>
             Deshacer
-          </button>
+          </button>}
         </div>
       )}
 

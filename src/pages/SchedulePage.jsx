@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import ScheduleItem from '../components/admin/ScheduleItem'
-import { requestContext } from '../data/requests'
+import { getUnfinishedAppointmentDates } from '../services/bookingService'
 import {
   blockTimeSlot,
   enableTimeSlot,
@@ -23,10 +23,19 @@ const availabilityActions = {
 function SchedulePage({ requests, onViewRequests }) {
   const [, refreshAvailability] = useState(0)
   useEffect(() => subscribeAvailability(() => refreshAvailability((value) => value + 1)), [])
-  const bookingDates = getBookingDates(undefined, requests)
+  const upcomingDates = getBookingDates(undefined, requests)
   const [selectedDateId, setSelectedDateId] = useState(
-    () => bookingDates[0]?.id ?? '',
+    () => upcomingDates[0]?.id ?? '',
   )
+  const unfinishedDates = getUnfinishedAppointmentDates()
+  const selectedPreviousDate = selectedDateId < upcomingDates[0]?.id && !unfinishedDates.includes(selectedDateId)
+    ? [selectedDateId] : []
+  const previousDates = [...unfinishedDates, ...selectedPreviousDate].map((id) => {
+    const date = new Date(`${id}T12:00:00`)
+    return { id, label: unfinishedDates.includes(id) ? 'Por cerrar' : 'Anterior', dayNumber: date.getDate(), isPrevious: true,
+      month: date.toLocaleDateString('es-CL', { month: 'short' }).replace('.', '') }
+  })
+  const bookingDates = [upcomingDates[0], ...previousDates, ...upcomingDates.slice(1)].filter(Boolean)
   const [availabilityFeedback, setAvailabilityFeedback] = useState(null)
   const referenceDateId = bookingDates[0]?.id
   const dateLabel = selectedDateId ? formatRequestDateId(selectedDateId) : ''
@@ -34,13 +43,12 @@ function SchedulePage({ requests, onViewRequests }) {
   const timelineItems = selectedDateId
     ? getEffectiveTimeSlotsForDate(selectedDateId, dayRequests)
     : []
-  const isCompleted = (item) =>
-    selectedDateId < referenceDateId ||
-    (selectedDateId === referenceDateId && item.time <= requestContext.currentTime)
   const confirmedItems = timelineItems.filter((item) => item.status === 'confirmed')
-  const completedCount = confirmedItems.filter(isCompleted).length
-  const pendingAttentionCount = confirmedItems.length - completedCount
-  const nextAppointment = confirmedItems.find((item) => !isCompleted(item))
+  const completedCount = timelineItems.filter((item) => item.status === 'completed').length
+  const totalAppointments = timelineItems.reduce((total, item) => total +
+    (['confirmed', 'completed', 'no_show'].includes(item.status) ? 1 : 0) + item.cancelledAppointments.length, 0)
+  const pendingAttentionCount = confirmedItems.length
+  const nextAppointment = confirmedItems.find((item) => new Date(`${selectedDateId}T${item.time}:00`) >= new Date())
 
   const updateAvailability = (slot) => {
     const result = availabilityActions[slot.action]?.(selectedDateId, slot.time, dayRequests)
@@ -83,7 +91,7 @@ function SchedulePage({ requests, onViewRequests }) {
 
       <section className="schedule-summary" aria-label="Resumen de agenda">
         <div>
-          <strong>{confirmedItems.length}</strong>
+          <strong>{totalAppointments}</strong>
           <span>Total de atenciones</span>
         </div>
         <div>
@@ -123,8 +131,8 @@ function SchedulePage({ requests, onViewRequests }) {
             <button
               type="button"
               aria-pressed={selectedDateId === date.id}
-              aria-label={`${formatRequestDateId(date.id)}${date.available ? '' : ', sin horas disponibles'}`}
-              data-day-off={!date.available || undefined}
+              aria-label={`${formatRequestDateId(date.id)}${date.isPrevious ? ', atenciones por cerrar' : date.available ? '' : ', sin horas disponibles'}`}
+              data-day-off={!date.available && !date.isPrevious || undefined}
               onClick={() => {
                 setSelectedDateId(date.id)
                 setAvailabilityFeedback(null)
@@ -145,6 +153,7 @@ function SchedulePage({ requests, onViewRequests }) {
             item={{ ...item, isNext: item.id === nextAppointment?.id }}
             dateLabel={dateLabel}
             onAvailabilityAction={() => updateAvailability(item)}
+            onOutcomeRecorded={(message) => setAvailabilityFeedback({ type: 'success', message })}
             onViewRequests={() =>
               onViewRequests({
                 dateId: selectedDateId,

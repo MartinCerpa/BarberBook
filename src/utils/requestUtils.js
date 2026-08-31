@@ -1,4 +1,8 @@
-const historicalStatuses = new Set(['rejected', 'cancelled', 'completed'])
+const historicalStatuses = new Set(['rejected', 'cancelled', 'completed', 'no_show'])
+
+export const getLocalDateId = (date = new Date()) => [
+  date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0'),
+].join('-')
 
 export const formatRequestDateId = (dateId) =>
   new Intl.DateTimeFormat('es-CL', {
@@ -37,6 +41,9 @@ const timeToMinutes = (time) => {
 }
 
 export const isPastRequest = (request, context) => {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(request.dateId)) {
+    return new Date(`${request.dateId}T${request.time}:00`).getTime() <= Date.now()
+  }
   if (request.dayOrder < context.currentDayOrder) {
     return true
   }
@@ -54,14 +61,18 @@ export const isHistoricalRequest = (request, context) =>
 export const sortUpcomingRequests = (requests) =>
   [...requests].sort(
     (firstRequest, secondRequest) =>
-      firstRequest.dayOrder - secondRequest.dayOrder ||
+      (firstRequest.dateId && secondRequest.dateId
+        ? firstRequest.dateId.localeCompare(secondRequest.dateId)
+        : firstRequest.dayOrder - secondRequest.dayOrder) ||
       timeToMinutes(firstRequest.time) - timeToMinutes(secondRequest.time),
   )
 
 export const sortHistoryRequests = (requests) =>
   [...requests].sort(
     (firstRequest, secondRequest) =>
-      secondRequest.dayOrder - firstRequest.dayOrder ||
+      (firstRequest.dateId && secondRequest.dateId
+        ? secondRequest.dateId.localeCompare(firstRequest.dateId)
+        : secondRequest.dayOrder - firstRequest.dayOrder) ||
       timeToMinutes(secondRequest.time) - timeToMinutes(firstRequest.time),
   )
 

@@ -1,9 +1,15 @@
+import { useState } from 'react'
+import AppointmentOutcomeActions from './AppointmentOutcomeActions'
+
 const statusLabels = {
   available: 'Disponible',
   confirmed: 'Confirmada',
   blocked: 'Bloqueada',
   pending: 'Con solicitudes',
   unavailable: 'No disponible',
+  completed: 'Completada',
+  cancelled: 'Cancelada',
+  no_show: 'No asistió',
 }
 
 const actionLabels = {
@@ -13,8 +19,10 @@ const actionLabels = {
   restore: 'Restaurar horario',
 }
 
-function ScheduleItem({ item, dateLabel, onAvailabilityAction, onViewRequests }) {
+function ScheduleItem({ item, dateLabel, onAvailabilityAction, onViewRequests, onOutcomeRecorded }) {
   const actionLabel = actionLabels[item.action]
+  const [isManaging, setIsManaging] = useState(false)
+  const isAppointment = ['confirmed', 'completed', 'no_show'].includes(item.status)
 
   return (
     <article
@@ -24,7 +32,7 @@ function ScheduleItem({ item, dateLabel, onAvailabilityAction, onViewRequests })
       <span className="schedule-item__marker" aria-hidden="true" />
       <div className="schedule-item__content">
         <div>
-          {item.status === 'confirmed' ? (
+          {isAppointment ? (
             <>
               <strong>{item.customerName}</strong>
               <span>{item.service} · {item.duration} min</span>
@@ -44,10 +52,18 @@ function ScheduleItem({ item, dateLabel, onAvailabilityAction, onViewRequests })
             </>
           )}
         </div>
-        {item.status === 'confirmed' ? (
+        {isAppointment ? (
           <div className="schedule-item__status">
             {item.isNext && <span>Próximo</span>}
-            <span className="status-badge status-badge--confirmed">Confirmada</span>
+            <span className={`status-badge status-badge--${item.status}`}>{statusLabels[item.status]}</span>
+            {item.status === 'confirmed' && item.appointmentId && (
+              <button className="schedule-item__action" type="button"
+                aria-label={`Resultado de ${item.customerName} a las ${item.time}`}
+                aria-expanded={isManaging} aria-controls={`outcome-${item.appointmentId}`}
+                onClick={() => setIsManaging((current) => !current)}>
+                {isManaging ? 'Cerrar' : 'Resultado'}
+              </button>
+            )}
           </div>
         ) : actionLabel ? (
           <button
@@ -69,6 +85,15 @@ function ScheduleItem({ item, dateLabel, onAvailabilityAction, onViewRequests })
           </button>
         ) : null}
       </div>
+      {isManaging && item.status === 'confirmed' && (
+        <AppointmentOutcomeActions appointment={item} onClose={() => setIsManaging(false)}
+          onRecorded={onOutcomeRecorded} />
+      )}
+      {item.cancelledAppointments?.length > 0 && (
+        <p className="schedule-item__cancelled">
+          {item.cancelledAppointments.map((appointment) => `Cancelada · ${appointment.customerName}`).join(' / ')}
+        </p>
+      )}
     </article>
   )
 }

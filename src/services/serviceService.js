@@ -17,7 +17,7 @@ const baseServiceIds = new Set(services.map((service) => service.id))
 
 const copyService = (service) => ({ ...service })
 
-const getEffectiveServices = () => {
+export const getEffectiveServices = () => {
   const preferences = getServicePreferences()
   const overrides = preferences?.overrides ?? {}
   const base = services.map((service) => ({

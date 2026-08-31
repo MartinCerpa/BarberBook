@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { createBooking, createBookingId } from '../../services/bookingService.js'
 import {
   getBookingDates,
   getEffectiveTimeSlotsForDate,
@@ -25,6 +26,10 @@ const initialBooking = {
 function BookingFlow({ services, onExit }) {
   const [currentStep, setCurrentStep] = useState(0)
   const [booking, setBooking] = useState(initialBooking)
+  const submissionId = useRef(null)
+  const submitting = useRef(false)
+  const [submissionError, setSubmissionError] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [, refreshAvailability] = useState(0)
   useEffect(() => subscribeAvailability(() => refreshAvailability((value) => value + 1)), [])
   const dates = getBookingDates()
@@ -65,6 +70,29 @@ function BookingFlow({ services, onExit }) {
       dateId,
       time: currentBooking.dateId === dateId ? currentBooking.time : '',
     }))
+  }
+
+  const submitBooking = async () => {
+    if (submitting.current) return
+    submitting.current = true
+    setIsSubmitting(true)
+    setSubmissionError(null)
+    submissionId.current ??= createBookingId()
+    try {
+      const result = await createBooking({ ...booking, id: submissionId.current })
+      if (!result.success) {
+        setSubmissionError(result.error)
+        return
+      }
+      // El éxito se muestra solo después de guardar una solicitud pendiente, nunca una confirmación.
+      setCurrentStep(5)
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    } catch {
+      setSubmissionError('No pudimos enviar tu solicitud. Inténtalo de nuevo.')
+    } finally {
+      submitting.current = false
+      setIsSubmitting(false)
+    }
   }
 
   if (currentStep === 5) {
@@ -117,7 +145,7 @@ function BookingFlow({ services, onExit }) {
 
           {currentStep === 2 && (
             <TimeSelector
-              slots={slots}
+              slots={slots.map((slot) => ({ ...slot, status: slot.bookingStatus }))}
               selectedTime={booking.time}
               onSelect={(time) =>
                 setBooking((currentBooking) => ({ ...currentBooking, time }))
@@ -139,12 +167,16 @@ function BookingFlow({ services, onExit }) {
           )}
 
           {currentStep === 4 && (
+            <div aria-busy={isSubmitting}>
+            {submissionError && <p className="form-error" role="alert">{submissionError}</p>}
+            {isSubmitting && <p role="status">Enviando solicitud…</p>}
             <BookingSummary
               booking={booking}
               service={selectedService}
               onBack={() => goToStep(3)}
-              onSubmit={() => goToStep(5)}
+              onSubmit={submitBooking}
             />
+            </div>
           )}
         </div>
       </div>

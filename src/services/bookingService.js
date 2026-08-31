@@ -1,53 +1,197 @@
-import { initialRequests } from '../data/requests.js'
+import {
+  FINAL_OUTCOMES, findOrCreateCustomer, readBookingState,
+  readStateForAppointment, saveBookingState, subscribeBookings,
+} from './bookingRepository.js'
+import { getEffectiveTimeSlotsForDate } from './availabilityService.js'
+import { getServiceById } from './serviceService.js'
+import { isValidDateId, isValidTime } from './availabilityPreferencesService.js'
+import { formatRequestDateId, getLocalDateId } from '../utils/requestUtils.js'
+import { normalizeCustomerPhone } from '../utils/customerUtils.js'
 
-const copyBooking = (booking) =>
-  booking.customer
-    ? { ...booking, customer: { ...booking.customer } }
-    : { ...booking }
+export { subscribeBookings }
+export const outcomeLabels = { completed: 'Completada', cancelled: 'Cancelada', no_show: 'No asistió' }
+const failure = (error) => ({ success: false, error })
+const storageFailure = () => failure('No pudimos guardar el cambio en este navegador. Inténtalo de nuevo.')
 
-let bookings = initialRequests.map(copyBooking)
-let bookingSequence = bookings.length
+export const getRequestsSnapshot = () => readBookingState().records
+  .filter((record) => record.source !== 'schedule-demo')
+  .map((record) => ({ ...record, date: formatRequestDateId(record.dateId) }))
 
-const updateBookingStatus = (bookingId, status) => {
-  const bookingIndex = bookings.findIndex((booking) => booking.id === bookingId)
+export const getBookings = async () => getRequestsSnapshot()
+export const getAppointments = () => readBookingState().records.filter((record) =>
+  record.appointmentId && (record.status === 'confirmed' || FINAL_OUTCOMES.includes(record.status)),
+)
 
-  if (bookingIndex < 0) {
-    throw new Error(`Booking not found: ${bookingId}`)
-  }
+export const getUnfinishedAppointmentDates = (now = new Date()) => [...new Set(
+  getAppointments().filter((record) => record.status === 'confirmed' && record.dateId < getLocalDateId(now))
+    .map((record) => record.dateId),
+)].sort().reverse()
 
-  const updatedBooking = { ...bookings[bookingIndex], status }
-  bookings = bookings.map((booking, index) =>
-    index === bookingIndex ? updatedBooking : booking,
-  )
+export const createBookingId = () => `request-local-${typeof crypto !== 'undefined' && crypto.randomUUID
+  ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`}`
 
-  return copyBooking(updatedBooking)
+const isSlotBookable = (dateId, time, state) => {
+  const records = state.records.filter((record) => record.source !== 'schedule-demo' && record.dateId === dateId)
+  return getEffectiveTimeSlotsForDate(dateId, records).some((slot) => slot.time === time && slot.isBookable)
 }
 
-export const getBookings = async () => bookings.map(copyBooking)
+const commitRecord = (state, current, changes, undoable = false) => {
+  const booking = { ...current, ...changes, revision: current.revision + 1 }
+  state.records = state.records.map((record) => record.id === current.id ? booking : record)
+  if (!saveBookingState(state).success) return storageFailure()
+  return {
+    success: true, changed: true, booking,
+    undoToken: undoable ? { recordId: current.id, revision: booking.revision, previous: current } : null,
+  }
+}
 
 export const createBooking = async (bookingData) => {
-  bookingSequence += 1
-  const booking = {
-    status: 'pending',
-    ...bookingData,
-    id:
-      bookingData.id ??
-      `request-${String(bookingSequence).padStart(3, '0')}`,
+  const phone = normalizeCustomerPhone(bookingData.customer?.phone)
+  const name = bookingData.customer?.name?.trim()
+  if (!phone || !name || name.length < 2 || name.length > 100 ||
+    !isValidDateId(bookingData.dateId) || !isValidTime(bookingData.time)) {
+    return failure('Revisa el nombre, teléfono, fecha y hora de la solicitud.')
   }
-
-  bookings = [...bookings, booking]
-  return copyBooking(booking)
+  const service = await getServiceById(bookingData.serviceId)
+  if (!service?.active) return failure('El servicio ya no está disponible. Elige otro servicio.')
+  // Lee después de la consulta: dos envíos concurrentes no reutilizan una copia desactualizada.
+  const state = readBookingState()
+  const id = bookingData.id ?? createBookingId()
+  const existing = state.records.find((record) => record.id === id)
+  if (existing) {
+    return existing.phone === phone && existing.dateId === bookingData.dateId &&
+      existing.time === bookingData.time && existing.serviceId === service.id
+      ? { success: true, changed: false, booking: existing }
+      : failure('Esta solicitud ya fue utilizada. Vuelve a iniciar la reserva.')
+  }
+  if (!isSlotBookable(bookingData.dateId, bookingData.time, state)) {
+    return failure('La hora elegida ya no está disponible. Selecciona otra hora.')
+  }
+  const customer = findOrCreateCustomer(state, { name, phone, createdAt: getLocalDateId() })
+  const booking = {
+    id, appointmentId: null, customerId: customer.id, customerName: name, phone,
+    serviceId: service.id, service: service.name, price: service.price,
+    duration: service.duration, suggestedDuration: service.duration,
+    dateId: bookingData.dateId, time: bookingData.time,
+    status: 'pending', source: 'request', createdAt: getLocalDateId(), revision: 0,
+  }
+  state.records.push(booking)
+  return saveBookingState(state).success ? { success: true, changed: true, booking } : storageFailure()
 }
 
-export const confirmBooking = async (bookingId) =>
-  updateBookingStatus(bookingId, 'confirmed')
+export const acceptRequest = (bookingId) => {
+  const state = readBookingState()
+  const current = state.records.find((record) => record.id === bookingId)
+  if (!current) return failure('No encontramos esta solicitud.')
+  if (current.status === 'confirmed') return { success: true, changed: false, booking: current }
+  if (current.status !== 'pending') return failure('Solo se puede confirmar una solicitud pendiente.')
+  if (!Number.isInteger(current.price) || current.price < 0) return failure('La solicitud no tiene un precio de servicio válido.')
+  if (!isSlotBookable(current.dateId, current.time, state)) return failure('Este horario ya no se puede confirmar.')
+  return commitRecord(state, current, {
+    status: 'confirmed', appointmentId: `appointment-${current.id}`, confirmedAt: new Date().toISOString(),
+  }, true)
+}
 
-export const rejectBooking = async (bookingId) =>
-  updateBookingStatus(bookingId, 'rejected')
+export const getAppointmentOutcomeOptions = (appointment, now = new Date()) => {
+  const start = new Date(`${appointment.dateId}T${appointment.time}:00`).getTime()
+  const duration = Number.isInteger(appointment.duration) && appointment.duration > 0 ? appointment.duration : 0
+  const end = start + duration * 60000
+  const noShowFrom = start + 15 * 60000
+  const active = appointment.status === 'confirmed'
+  const timeLabel = (time) => new Date(time).toLocaleString('es-CL', {
+    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+  })
+  const options = [
+    { id: 'completed', label: 'Completar', availableAt: end,
+      reason: `Disponible desde el término previsto: ${timeLabel(end)}.` },
+    { id: 'cancelled', label: 'Cancelar', availableAt: -Infinity, reason: '' },
+    { id: 'no_show', label: 'No asistió', availableAt: noShowFrom,
+      reason: `Disponible 15 minutos después del inicio: ${timeLabel(noShowFrom)}.` },
+  ]
+  return options.map((option) => ({ ...option,
+    enabled: active && Number.isFinite(start) && now.getTime() >= option.availableAt &&
+      (option.id !== 'completed' || Number.isInteger(appointment.price)),
+  }))
+}
+
+export const recordAppointmentOutcome = ({ appointmentId, outcome }, now = new Date()) => {
+  if (!FINAL_OUTCOMES.includes(outcome)) return failure('Resultado de atención inválido.')
+  const state = readStateForAppointment(appointmentId)
+  const current = state.records.find((record) => record.appointmentId === appointmentId)
+  if (!current) return failure('No encontramos esta atención.')
+  if (current.status === outcome) return { success: true, changed: false, booking: current }
+  if (current.status !== 'confirmed') return failure('Esta atención ya tiene un resultado o no está confirmada.')
+  const option = getAppointmentOutcomeOptions(current, now).find((item) => item.id === outcome)
+  if (!option.enabled) return failure(option.reason || 'No se puede registrar este resultado todavía.')
+  if (outcome === 'no_show') {
+    const noShows = state.records.filter((record) => record.customerId === current.customerId && record.status === 'no_show').length + 1
+    if (noShows >= 2) {
+      state.customers = state.customers.map((customer) => customer.id === current.customerId
+        ? { ...customer, trustStatus: 'requires_manual_approval' } : customer)
+    }
+  }
+  return commitRecord(state, current, { status: outcome, outcomeRecordedAt: now.toISOString() })
+}
+
+export const updateBookingStatus = (bookingId, status) => {
+  if (status === 'confirmed') return acceptRequest(bookingId)
+  const state = readBookingState()
+  const current = state.records.find((record) => record.id === bookingId)
+  if (!current) return failure('No encontramos esta solicitud.')
+  if (current.status === status) return { success: true, changed: false, booking: current }
+  if (status === 'cancelled') {
+    const result = recordAppointmentOutcome({ appointmentId: current.appointmentId, outcome: status })
+    return result.success && result.changed
+      ? { ...result, undoToken: { recordId: current.id, revision: result.booking.revision, previous: current } }
+      : result
+  }
+  if (!((status === 'rejected' && current.status === 'pending') ||
+    (status === 'pending' && current.status === 'confirmed'))) return failure('Esta transición no está permitida.')
+  return commitRecord(state, current, { status }, true)
+}
+
+export const undoBookingChange = (token) => {
+  const state = readBookingState()
+  const current = state.records.find((record) => record.id === token?.recordId)
+  if (!current || current.revision !== token.revision || token.previous?.id !== current.id ||
+    ['completed', 'no_show'].includes(current.status)) return failure('El registro cambió; ya no se puede deshacer esta acción.')
+  if (token.previous.status === 'confirmed' && !isSlotBookable(current.dateId, token.previous.time, state)) {
+    return failure('No se puede restaurar la reserva porque el horario ya no está disponible.')
+  }
+  return commitRecord(state, current, { ...token.previous, outcomeRecordedAt: token.previous.outcomeRecordedAt })
+}
+
+export const updateBookingDetails = (bookingId, changes) => {
+  const state = readBookingState()
+  const current = state.records.find((record) => record.id === bookingId)
+  if (!current || !['pending', 'confirmed'].includes(current.status)) return failure('Esta reserva ya no admite cambios.')
+  const update = {}
+  if (changes.duration !== undefined) {
+    if (current.status !== 'pending' || ![30, 45, 60].includes(changes.duration)) return failure('Selecciona una duración válida.')
+    update.duration = changes.duration
+  }
+  if (changes.time !== undefined) {
+    if (!isValidTime(changes.time)) return failure('Selecciona una hora válida.')
+    if (changes.time !== current.time && !isSlotBookable(current.dateId, changes.time, state)) return failure('La nueva hora no está disponible.')
+    update.time = changes.time
+  }
+  return commitRecord(state, current, update)
+}
+
+export const confirmBooking = async (bookingId) => acceptRequest(bookingId)
+export const rejectBooking = async (bookingId) => updateBookingStatus(bookingId, 'rejected')
 
 export const bookingService = {
   getBookings,
   createBooking,
   confirmBooking,
   rejectBooking,
+  acceptRequest,
+  recordAppointmentOutcome,
+  getAppointments,
+  getRequestsSnapshot,
+  updateBookingStatus,
+  updateBookingDetails,
+  undoBookingChange,
+  subscribeBookings,
 }

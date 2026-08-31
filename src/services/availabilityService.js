@@ -5,8 +5,10 @@ import {
   SLOT_INTERVAL_MINUTES,
   timeToMinutes,
 } from '../data/availability.js'
-import { initialRequests, requestContext } from '../data/requests.js'
-import { getScheduleAppointmentsForDate } from '../data/schedule.js'
+import { requestContext } from '../data/requests.js'
+import {
+  BOOKINGS_CHANGE_EVENT, BOOKINGS_STORAGE_KEY, getScheduleBookings, readBookingState,
+} from './bookingRepository.js'
 import { getRequestDateId, isHistoricalRequest } from '../utils/requestUtils.js'
 import {
   AVAILABILITY_CHANGE_EVENT,
@@ -24,6 +26,7 @@ import { getWorkingHours, WORKING_HOURS_STORAGE_KEY } from './workingHoursPrefer
 const getSlotId = (date, time) => date + '|' + time
 const storageKeys = new Set([
   BLOCKED_SLOTS_STORAGE_KEY, ENABLED_SLOTS_STORAGE_KEY, WORKING_HOURS_STORAGE_KEY,
+  BOOKINGS_STORAGE_KEY,
 ])
 
 export const subscribeAvailability = (onChange) => {
@@ -32,17 +35,20 @@ export const subscribeAvailability = (onChange) => {
   }
   window.addEventListener('storage', onStorage)
   window.addEventListener(AVAILABILITY_CHANGE_EVENT, onChange)
+  window.addEventListener(BOOKINGS_CHANGE_EVENT, onChange)
   return () => {
     window.removeEventListener('storage', onStorage)
     window.removeEventListener(AVAILABILITY_CHANGE_EVENT, onChange)
+    window.removeEventListener(BOOKINGS_CHANGE_EVENT, onChange)
   }
 }
 
-export const getAvailabilityRequestsForDate = (dateId, requests = initialRequests) => {
+export const getAvailabilityRequestsForDate = (dateId, requests = readBookingState().records) => {
   const referenceDateId = getBaseBookingDates(1)[0].id
   return requests.filter((request) =>
     getRequestDateId(request, referenceDateId, requestContext) === dateId &&
-    (request.status === 'confirmed' ||
+    request.source !== 'schedule-demo' &&
+    (['confirmed', 'completed', 'no_show', 'cancelled'].includes(request.status) ||
       (request.status === 'pending' && !isHistoricalRequest(request, requestContext))),
   )
 }
@@ -57,7 +63,7 @@ export const getEffectiveTimeSlotsForDate = (dateId, requestsForDate) => {
   const blockedTimes = new Set(blocks.map((slot) => slot.time))
   const enabledTimes = new Set(enabled.map((slot) => slot.time))
   const dayRequests = requestsForDate ?? getAvailabilityRequestsForDate(dateId)
-  const appointments = getScheduleAppointmentsForDate(dateId)
+  const appointments = getScheduleBookings(dateId)
   const usualTimes = new Set()
   intervals.forEach(({ start, end }) => {
     for (let minutes = timeToMinutes(start); minutes < timeToMinutes(end); minutes += SLOT_INTERVAL_MINUTES) {
@@ -78,8 +84,10 @@ export const getEffectiveTimeSlotsForDate = (dateId, requestsForDate) => {
     const isNormallyAvailable = usualTimes.has(time)
     const isEnabledException = enabledTimes.has(time)
     const slotRequests = dayRequests.filter((request) => request.time === time)
-    const confirmed = slotRequests.find((request) => request.status === 'confirmed') ??
-      appointments.find((appointment) => appointment.time === time)
+    const slotAppointments = [...slotRequests, ...appointments.filter((item) => item.time === time)]
+    const confirmed = slotAppointments.find((request) => request.status === 'confirmed') ??
+      slotAppointments.find((request) => ['completed', 'no_show'].includes(request.status))
+    const cancelledAppointments = slotAppointments.filter((request) => request.status === 'cancelled')
     const pendingCount = slotRequests.filter((request) => request.status === 'pending').length
     const offered = isNormallyAvailable || isEnabledException
     let status = offered ? 'available' : 'unavailable'
@@ -87,7 +95,7 @@ export const getEffectiveTimeSlotsForDate = (dateId, requestsForDate) => {
 
     // Las atenciones y solicitudes conservan su prioridad sin alterar sus datos.
     if (confirmed) {
-      status = 'confirmed'
+      status = confirmed.status
       action = null
     } else if (pendingCount) {
       status = 'pending'
@@ -100,10 +108,14 @@ export const getEffectiveTimeSlotsForDate = (dateId, requestsForDate) => {
     return {
       ...confirmed,
       id: getSlotId(dateId, time),
+      dateId,
       time,
       status,
+      // La disponibilidad pública conserva su vocabulario; Agenda puede mostrar el resultado.
+      bookingStatus: ['completed', 'no_show'].includes(status) ? 'confirmed' : status,
       action,
       pendingCount,
+      cancelledAppointments,
       isNormallyAvailable,
       isEnabledException,
       isManualBlock: status === 'blocked',

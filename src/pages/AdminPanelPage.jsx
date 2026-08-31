@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { initialRequests, requestContext } from '../data/requests'
+import { requestContext } from '../data/requests'
+import {
+  getRequestsSnapshot, subscribeBookings, undoBookingChange,
+  updateBookingDetails, updateBookingStatus,
+} from '../services/bookingService'
 import AdminLayout from '../layouts/AdminLayout'
 import AdminDashboardPage from './AdminDashboardPage'
 import AdminPlaceholderPage from './AdminPlaceholderPage'
@@ -18,11 +22,12 @@ const requestStatusMessages = {
 }
 
 function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
-  const [requests, setRequests] = useState(initialRequests)
+  const [requests, setRequests] = useState(getRequestsSnapshot)
   const [requestFeedback, setRequestFeedback] = useState(null)
   const [requestFocus, setRequestFocus] = useState(null)
   const feedbackTimerRef = useRef(null)
   const feedbackRemovalTimerRef = useRef(null)
+  useEffect(() => subscribeBookings(() => setRequests(getRequestsSnapshot())), [])
   const pendingRequests = useMemo(
     () =>
       requests.filter(
@@ -45,24 +50,24 @@ function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
     [],
   )
 
-  const updateRequestStatus = (requestId, status) => {
+  const updateRequestStatus = async (requestId, status) => {
     const currentRequest = requests.find((request) => request.id === requestId)
 
     if (!currentRequest || currentRequest.status === status) {
       return
     }
 
-    setRequests((currentRequests) =>
-      currentRequests.map((request) =>
-        request.id === requestId ? { ...request, status } : request,
-      ),
-    )
+    const result = await updateBookingStatus(requestId, status)
+    if (!result.success) {
+      setRequestFeedback({ message: result.error })
+      return
+    }
 
     window.clearTimeout(feedbackTimerRef.current)
     window.clearTimeout(feedbackRemovalTimerRef.current)
     setRequestFeedback({
       requestId,
-      previousStatus: currentRequest.status,
+      undoToken: result.undoToken,
       message: requestStatusMessages[status],
     })
     feedbackTimerRef.current = window.setTimeout(
@@ -79,37 +84,29 @@ function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
     )
   }
 
-  const undoRequestStatus = () => {
-    if (!requestFeedback) {
+  const undoRequestStatus = async () => {
+    if (!requestFeedback?.undoToken) {
       return
     }
 
-    setRequests((currentRequests) =>
-      currentRequests.map((request) =>
-        request.id === requestFeedback.requestId
-          ? { ...request, status: requestFeedback.previousStatus }
-          : request,
-      ),
-    )
+    const result = await undoBookingChange(requestFeedback.undoToken)
+    if (!result.success) {
+      setRequestFeedback({ message: result.error })
+      return
+    }
     window.clearTimeout(feedbackTimerRef.current)
     window.clearTimeout(feedbackRemovalTimerRef.current)
     setRequestFeedback(null)
   }
 
-  const updateRequestDuration = (requestId, duration) => {
-    setRequests((currentRequests) =>
-      currentRequests.map((request) =>
-        request.id === requestId ? { ...request, duration } : request,
-      ),
-    )
+  const updateRequestDuration = async (requestId, duration) => {
+    const result = await updateBookingDetails(requestId, { duration })
+    if (!result.success) setRequestFeedback({ message: result.error })
   }
 
-  const updateRequestTime = (requestId, time) => {
-    setRequests((currentRequests) =>
-      currentRequests.map((request) =>
-        request.id === requestId ? { ...request, time } : request,
-      ),
-    )
+  const updateRequestTime = async (requestId, time) => {
+    const result = await updateBookingDetails(requestId, { time })
+    if (!result.success) setRequestFeedback({ message: result.error })
   }
 
   const renderSection = () => {
