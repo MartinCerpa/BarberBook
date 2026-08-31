@@ -1,75 +1,28 @@
-export const schedule = {
-  dateLabel: 'Jueves, 27 de agosto',
-  confirmedCount: 8,
-  availableCount: 2,
-  items: [
-    { id: 'slot-0900', time: '09:00', status: 'available' },
-    {
-      id: 'slot-1000',
-      time: '10:00',
+import { getTimeSlotsForDate } from './availability.js'
+
+const appointmentExamples = [
+  { customerName: 'Carlos Muñoz', service: 'Corte de cabello', duration: 45 },
+  { customerName: 'Sofía Herrera', service: 'Barba', duration: 30 },
+  { customerName: 'Valentina Lagos', service: 'Corte de cabello', duration: 45 },
+  { customerName: 'Diego Morales', service: 'Corte + barba', duration: 60 },
+  { customerName: 'Camila Soto', service: 'Barba', duration: 30 },
+]
+
+export const getScheduleAppointmentsForDate = (dateId) => {
+  const date = new Date(`${dateId}T12:00:00`)
+
+  if (date.getDay() === 0) {
+    return []
+  }
+
+  // Los ejemplos describen las horas ocupadas de la misma disponibilidad base.
+  return getTimeSlotsForDate(dateId)
+    .filter((slot) => slot.status === 'confirmed')
+    .map((slot, index) => ({
+      ...appointmentExamples[(date.getDay() - 1 + index) % appointmentExamples.length],
+      id: `schedule-${dateId}-${slot.time}`,
+      dateId,
+      time: slot.time,
       status: 'confirmed',
-      customerName: 'Carlos Muñoz',
-      service: 'Corte de cabello',
-      duration: 45,
-    },
-    {
-      id: 'slot-1045',
-      time: '10:45',
-      status: 'confirmed',
-      customerName: 'Sofía Herrera',
-      service: 'Barba',
-      duration: 30,
-    },
-    { id: 'slot-1130', time: '11:30', status: 'blocked' },
-    {
-      id: 'slot-1200',
-      time: '12:00',
-      status: 'confirmed',
-      customerName: 'Valentina Lagos',
-      service: 'Corte de cabello',
-      duration: 45,
-    },
-    {
-      id: 'slot-1245',
-      time: '12:45',
-      status: 'confirmed',
-      customerName: 'Diego Morales',
-      service: 'Corte + barba',
-      duration: 60,
-    },
-    {
-      id: 'slot-1345',
-      time: '13:45',
-      status: 'confirmed',
-      customerName: 'Camila Soto',
-      service: 'Barba',
-      duration: 30,
-    },
-    { id: 'slot-1430', time: '14:30', status: 'available' },
-    {
-      id: 'slot-1530',
-      time: '15:30',
-      status: 'confirmed',
-      customerName: 'Juan Pérez',
-      service: 'Corte de cabello',
-      duration: 45,
-      isNext: true,
-    },
-    {
-      id: 'slot-1615',
-      time: '16:15',
-      status: 'confirmed',
-      customerName: 'Fernanda Ruiz',
-      service: 'Corte + barba',
-      duration: 60,
-    },
-    {
-      id: 'slot-1715',
-      time: '17:15',
-      status: 'confirmed',
-      customerName: 'Nicolás Vega',
-      service: 'Corte de cabello',
-      duration: 45,
-    },
-  ],
+    }))
 }

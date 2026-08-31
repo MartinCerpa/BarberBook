@@ -20,6 +20,7 @@ const requestStatusMessages = {
 function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
   const [requests, setRequests] = useState(initialRequests)
   const [requestFeedback, setRequestFeedback] = useState(null)
+  const [requestFocus, setRequestFocus] = useState(null)
   const feedbackTimerRef = useRef(null)
   const feedbackRemovalTimerRef = useRef(null)
   const pendingRequests = useMemo(
@@ -120,6 +121,8 @@ function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
       return (
         <RequestsPage
           requests={requests}
+          initialFocus={requestFocus}
+          onFocusConsumed={() => setRequestFocus(null)}
           feedback={requestFeedback}
           onUndo={undoRequestStatus}
           onStatusChange={updateRequestStatus}
@@ -130,7 +133,15 @@ function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
     }
 
     if (activeSection === 'schedule') {
-      return <SchedulePage />
+      return (
+        <SchedulePage
+          requests={requests}
+          onViewRequests={(slot) => {
+            setRequestFocus(slot)
+            window.location.hash = '/panel/requests'
+          }}
+        />
+      )
     }
 
     if (activeSection === 'clients') {

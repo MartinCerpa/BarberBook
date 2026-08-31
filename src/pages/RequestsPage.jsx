@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import RequestCard from '../components/admin/RequestCard'
 import RequestHistoryCard from '../components/admin/RequestHistoryCard'
 import { requestContext } from '../data/requests'
 import {
+  formatRequestDateId,
+  getRequestDateId,
   groupRequestsByDate,
   isHistoricalRequest,
   isPastRequest,
@@ -20,6 +22,8 @@ const historyFilters = [
 
 function RequestsPage({
   requests,
+  initialFocus,
+  onFocusConsumed,
   feedback,
   onUndo,
   onStatusChange,
@@ -28,6 +32,13 @@ function RequestsPage({
 }) {
   const [activeView, setActiveView] = useState('upcoming')
   const [activeFilter, setActiveFilter] = useState('all')
+  const [focusedSlot, setFocusedSlot] = useState(initialFocus ?? null)
+
+  useEffect(() => {
+    if (initialFocus) {
+      onFocusConsumed()
+    }
+  }, [initialFocus, onFocusConsumed])
 
   const upcomingRequests = useMemo(
     () =>
@@ -68,17 +79,27 @@ function RequestsPage({
         ? rejectedRequests
         : historyRequests
   const filters = activeView === 'history' ? historyFilters : []
-  const visibleRequests = activeRequests.filter((request) => {
-    if (activeFilter === 'all') {
-      return true
-    }
+  const visibleRequests = focusedSlot
+    ? sortUpcomingRequests(
+        requests.filter((request) =>
+          getRequestDateId(request, focusedSlot.referenceDateId, requestContext) === focusedSlot.dateId &&
+          request.time === focusedSlot.time,
+        ),
+      ).map((request) => ({
+        ...request,
+        date: formatRequestDateId(focusedSlot.dateId),
+      }))
+    : activeRequests.filter((request) => {
+        if (activeFilter === 'all') {
+          return true
+        }
 
-    if (activeFilter === 'past') {
-      return isPastRequest(request, requestContext)
-    }
+        if (activeFilter === 'past') {
+          return isPastRequest(request, requestContext)
+        }
 
-    return request.status === activeFilter
-  })
+        return request.status === activeFilter
+      })
   const groupedRequests = groupRequestsByDate(visibleRequests)
   const pendingCount = upcomingRequests.length
   const viewHeading = {
@@ -111,6 +132,7 @@ function RequestsPage({
   }
 
   const selectView = (view) => {
+    setFocusedSlot(null)
     setActiveView(view)
     setActiveFilter('all')
   }
@@ -127,6 +149,20 @@ function RequestsPage({
           <span>por revisar</span>
         </div>
       </header>
+
+      {focusedSlot && (
+        <div className="request-slot-focus" role="status">
+          <div>
+            <span>
+              Desde Agenda · {visibleRequests.length} {visibleRequests.length === 1 ? 'solicitud' : 'solicitudes'}
+            </span>
+            <strong>{formatRequestDateId(focusedSlot.dateId)} · {focusedSlot.time}</strong>
+          </div>
+          <button type="button" onClick={() => setFocusedSlot(null)}>
+            Ver todas las solicitudes
+          </button>
+        </div>
+      )}
 
       <div
         className="request-view-switcher"
@@ -165,16 +201,16 @@ function RequestsPage({
       <div className="request-list-heading">
         <div>
           <p className="eyebrow">{viewHeading.eyebrow}</p>
-          <h2>{viewHeading.title}</h2>
+          <h2>{focusedSlot ? 'Solicitudes de este horario' : viewHeading.title}</h2>
         </div>
-        {activeView === 'upcoming' && (
+        {activeView === 'upcoming' && !focusedSlot && (
           <p>
             Referencia simulada: hoy a las {requestContext.currentTime}
           </p>
         )}
       </div>
 
-      {filters.length > 0 && (
+      {!focusedSlot && filters.length > 0 && (
         <div
           className="request-filters"
           role="group"
@@ -211,7 +247,7 @@ function RequestsPage({
 
       {visibleRequests.length > 0 ? (
         <div className="request-groups" role="tabpanel">
-          {activeView === 'upcoming'
+          {focusedSlot || activeView === 'upcoming'
             ? groupedRequests.map((group) => {
                 const { dayLabel, dateLabel } = splitDateLabel(group.date)
 
@@ -225,7 +261,14 @@ function RequestsPage({
                       className="requests-grid"
                       aria-label={`Solicitudes para ${group.date}`}
                     >
-                      {group.requests.map((request) => (
+                      {group.requests.map((request) =>
+                        focusedSlot && request.status !== 'confirmed' && isHistoricalRequest(request, requestContext) ? (
+                          <RequestHistoryCard
+                            request={request}
+                            context={requestContext}
+                            key={request.id}
+                          />
+                        ) : (
                         <RequestCard
                           request={request}
                           onStatusChange={onStatusChange}
@@ -259,8 +302,8 @@ function RequestsPage({
         </div>
       ) : (
         <div className="requests-empty" role="status">
-          <strong>No hay solicitudes en esta categoría</strong>
-          <p>Puedes revisar otra vista o cambiar el filtro seleccionado.</p>
+          <strong>{focusedSlot ? 'No hay solicitudes para este horario' : 'No hay solicitudes en esta categoría'}</strong>
+          <p>{focusedSlot ? 'Puedes volver a todas las solicitudes o revisar otro horario en Agenda.' : 'Puedes revisar otra vista o cambiar el filtro seleccionado.'}</p>
         </div>
       )}
     </div>

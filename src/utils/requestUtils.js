@@ -1,5 +1,36 @@
 const historicalStatuses = new Set(['rejected', 'cancelled', 'completed'])
 
+export const formatRequestDateId = (dateId) =>
+  new Intl.DateTimeFormat('es-CL', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+    .format(new Date(`${dateId}T12:00:00`))
+    .replace(/^./, (letter) => letter.toLocaleUpperCase('es-CL'))
+
+export const getRequestDateId = (request, referenceDateId, context) => {
+  const explicitDate = request.dateId ?? request.date
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(explicitDate)) {
+    return explicitDate
+  }
+
+  if (!Number.isFinite(request.dayOrder)) {
+    return null
+  }
+
+  // Los mocks existentes expresan sus fechas con dayOrder, no con su texto.
+  const date = new Date(`${referenceDateId}T12:00:00`)
+  date.setDate(date.getDate() + request.dayOrder - context.currentDayOrder)
+
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-')
+}
+
 const timeToMinutes = (time) => {
   const [hours, minutes] = time.split(':').map(Number)
   return hours * 60 + minutes

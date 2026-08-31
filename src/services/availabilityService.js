@@ -11,30 +11,52 @@ const getSlotId = (date, time) => `${date}|${time}`
 
 export const getBookingDates = (totalDays) => getBaseBookingDates(totalDays)
 
-export const getEffectiveTimeSlotsForDate = (dateId) => {
+export const getEffectiveTimeSlotsForDate = (dateId, requestsForDate) => {
   const blockedSlotIds = new Set(
     getBlockedSlots().map((slot) => getSlotId(slot.date, slot.time)),
   )
 
   return getBaseTimeSlotsForDate(dateId).map((slot) => {
+    const slotRequests = requestsForDate?.filter(
+      (request) => request.time === slot.time,
+    )
+    let status = slot.status
+
+    if (slotRequests) {
+      if (
+        slot.status === 'confirmed' ||
+        slotRequests.some((request) => request.status === 'confirmed')
+      ) {
+        status = 'confirmed'
+      } else if (slotRequests.some((request) => request.status === 'pending')) {
+        status = 'pending'
+      } else if (slot.status === 'pending') {
+        // En el panel, las solicitudes reales sustituyen el marcador del mock.
+        status = 'available'
+      }
+    }
+
     const isManualBlock =
-      slot.status === 'available' &&
+      (status === 'available' || (!slotRequests && status === 'pending')) &&
       blockedSlotIds.has(getSlotId(dateId, slot.time))
 
     return {
       ...slot,
-      status: isManualBlock ? 'blocked' : slot.status,
+      status: isManualBlock ? 'blocked' : status,
       isManualBlock,
     }
   })
 }
 
-export const blockTimeSlot = (date, time) => {
-  const baseSlot = getBaseTimeSlotsForDate(date).find(
+export const blockTimeSlot = (date, time, requestsForDate) => {
+  const effectiveSlot = getEffectiveTimeSlotsForDate(date, requestsForDate).find(
     (slot) => slot.time === time,
   )
 
-  if (!baseSlot || baseSlot.status !== 'available') {
+  if (
+    !effectiveSlot ||
+    (effectiveSlot.status !== 'available' && !effectiveSlot.isManualBlock)
+  ) {
     return { success: false, reason: 'unavailable' }
   }
 
