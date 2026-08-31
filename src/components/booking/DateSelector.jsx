@@ -42,7 +42,7 @@ function DateSelector({ dates, selectedId, onSelect, onBack, onNext }) {
           className="button button--primary"
           type="button"
           onClick={onNext}
-          disabled={!selectedId}
+          disabled={!dates.some((date) => date.id === selectedId && date.available)}
         >
           Continuar
         </button>

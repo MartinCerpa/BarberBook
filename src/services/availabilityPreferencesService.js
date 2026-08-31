@@ -1,4 +1,12 @@
 export const BLOCKED_SLOTS_STORAGE_KEY = 'barberbook:blocked-slots:v1'
+export const ENABLED_SLOTS_STORAGE_KEY = 'barberbook:enabled-slots:v1'
+export const AVAILABILITY_CHANGE_EVENT = 'barberbook:availability-change'
+
+export const notifyAvailabilityChange = () => {
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+    window.dispatchEvent(new Event(AVAILABILITY_CHANGE_EVENT))
+  }
+}
 
 const getStorage = () => {
   try {
@@ -8,7 +16,7 @@ const getStorage = () => {
   }
 }
 
-const isValidDateId = (value) => {
+export const isValidDateId = (value) => {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return false
   }
@@ -23,7 +31,7 @@ const isValidDateId = (value) => {
   )
 }
 
-const isValidTime = (value) => {
+export const isValidTime = (value) => {
   if (typeof value !== 'string' || !/^\d{2}:\d{2}$/.test(value)) {
     return false
   }
@@ -64,7 +72,7 @@ export const sanitizeBlockedSlots = (value) => {
   return blockedSlots
 }
 
-export const getBlockedSlots = () => {
+const readSlots = (key) => {
   const storage = getStorage()
 
   if (!storage) {
@@ -72,14 +80,14 @@ export const getBlockedSlots = () => {
   }
 
   try {
-    const storedValue = storage.getItem(BLOCKED_SLOTS_STORAGE_KEY)
+    const storedValue = storage.getItem(key)
     return storedValue ? sanitizeBlockedSlots(JSON.parse(storedValue)) : []
   } catch {
     return []
   }
 }
 
-export const saveBlockedSlots = (value) => {
+const writeSlots = (key, value) => {
   const storage = getStorage()
   const blockedSlots = sanitizeBlockedSlots(value)
 
@@ -89,18 +97,29 @@ export const saveBlockedSlots = (value) => {
 
   try {
     if (blockedSlots.length) {
-      storage.setItem(BLOCKED_SLOTS_STORAGE_KEY, JSON.stringify(blockedSlots))
+      storage.setItem(key, JSON.stringify(blockedSlots))
     } else {
-      storage.removeItem(BLOCKED_SLOTS_STORAGE_KEY)
+      storage.removeItem(key)
     }
 
+    notifyAvailabilityChange()
     return { success: true, blockedSlots }
   } catch {
-    return { success: false, blockedSlots: getBlockedSlots() }
+    return { success: false, blockedSlots: readSlots(key) }
   }
+}
+
+export const getBlockedSlots = () => readSlots(BLOCKED_SLOTS_STORAGE_KEY)
+export const saveBlockedSlots = (value) => writeSlots(BLOCKED_SLOTS_STORAGE_KEY, value)
+export const getEnabledSlots = () => readSlots(ENABLED_SLOTS_STORAGE_KEY)
+export const saveEnabledSlots = (value) => {
+  const { success, blockedSlots } = writeSlots(ENABLED_SLOTS_STORAGE_KEY, value)
+  return { success, enabledSlots: blockedSlots }
 }
 
 export const availabilityPreferencesService = {
   getBlockedSlots,
   saveBlockedSlots,
+  getEnabledSlots,
+  saveEnabledSlots,
 }

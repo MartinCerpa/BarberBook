@@ -1,71 +1,39 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import ScheduleItem from '../components/admin/ScheduleItem'
-import { getScheduleAppointmentsForDate } from '../data/schedule'
 import { requestContext } from '../data/requests'
 import {
   blockTimeSlot,
+  enableTimeSlot,
+  getAvailabilityRequestsForDate,
   getBookingDates,
   getEffectiveTimeSlotsForDate,
+  restoreTimeSlot,
+  subscribeAvailability,
   unblockTimeSlot,
 } from '../services/availabilityService.js'
-import {
-  formatRequestDateId,
-  getRequestDateId,
-  isHistoricalRequest,
-} from '../utils/requestUtils'
+import { formatRequestDateId } from '../utils/requestUtils'
+
+const availabilityActions = {
+  block: blockTimeSlot,
+  unblock: unblockTimeSlot,
+  enable: enableTimeSlot,
+  restore: restoreTimeSlot,
+}
 
 function SchedulePage({ requests, onViewRequests }) {
-  const bookingDates = useMemo(() => getBookingDates(), [])
+  const [, refreshAvailability] = useState(0)
+  useEffect(() => subscribeAvailability(() => refreshAvailability((value) => value + 1)), [])
+  const bookingDates = getBookingDates(undefined, requests)
   const [selectedDateId, setSelectedDateId] = useState(
     () => bookingDates[0]?.id ?? '',
   )
   const [availabilityFeedback, setAvailabilityFeedback] = useState(null)
-  const selectedDate = bookingDates.find((date) => date.id === selectedDateId)
   const referenceDateId = bookingDates[0]?.id
   const dateLabel = selectedDateId ? formatRequestDateId(selectedDateId) : ''
-  const dayRequests = requests.filter(
-    (request) =>
-      getRequestDateId(request, referenceDateId, requestContext) === selectedDateId &&
-      (request.status === 'confirmed' ||
-        (request.status === 'pending' && !isHistoricalRequest(request, requestContext))),
-  )
-  const availabilitySlots = selectedDateId
+  const dayRequests = getAvailabilityRequestsForDate(selectedDateId, requests)
+  const timelineItems = selectedDateId
     ? getEffectiveTimeSlotsForDate(selectedDateId, dayRequests)
     : []
-  const appointments = selectedDateId
-    ? getScheduleAppointmentsForDate(selectedDateId)
-    : []
-  const times = [...new Set([
-    ...availabilitySlots.map((slot) => slot.time),
-    ...dayRequests.map((request) => request.time),
-  ])].sort()
-  const timelineItems = times.map((time) => {
-    const slot = availabilitySlots.find((item) => item.time === time)
-    const slotRequests = dayRequests.filter((request) => request.time === time)
-    const confirmedRequest = slotRequests.find((request) => request.status === 'confirmed')
-    const pendingRequests = slotRequests.filter((request) => request.status === 'pending')
-    const appointment = confirmedRequest ?? appointments.find((item) => item.time === time)
-    const item = { id: `${selectedDateId}|${time}`, time }
-
-    if (confirmedRequest || (selectedDate?.available && slot?.status === 'confirmed')) {
-      return { ...appointment, ...item, status: 'confirmed' }
-    }
-
-    if (pendingRequests.length) {
-      return { ...item, status: 'pending', pendingCount: pendingRequests.length }
-    }
-
-    if (slot?.isManualBlock) {
-      return { ...item, status: 'blocked', isManualBlock: true }
-    }
-
-    return {
-      ...item,
-      status: selectedDate?.available && slot?.status === 'available'
-        ? 'available'
-        : 'unavailable',
-    }
-  })
   const isCompleted = (item) =>
     selectedDateId < referenceDateId ||
     (selectedDateId === referenceDateId && item.time <= requestContext.currentTime)
@@ -74,12 +42,10 @@ function SchedulePage({ requests, onViewRequests }) {
   const pendingAttentionCount = confirmedItems.length - completedCount
   const nextAppointment = confirmedItems.find((item) => !isCompleted(item))
 
-  const updateManualBlock = (slot) => {
-    const result = slot.isManualBlock
-      ? unblockTimeSlot(selectedDateId, slot.time)
-      : blockTimeSlot(selectedDateId, slot.time, dayRequests)
+  const updateAvailability = (slot) => {
+    const result = availabilityActions[slot.action]?.(selectedDateId, slot.time, dayRequests)
 
-    if (!result.success) {
+    if (!result?.success) {
       setAvailabilityFeedback({
         type: 'error',
         message: 'No pudimos actualizar este horario en el navegador.',
@@ -89,9 +55,12 @@ function SchedulePage({ requests, onViewRequests }) {
 
     setAvailabilityFeedback({
       type: 'success',
-      message: slot.isManualBlock
-        ? `Bloqueo de ${slot.time} retirado para esta fecha.`
-        : `${slot.time} quedó bloqueada para esta fecha.`,
+      message: {
+        block: `${slot.time} quedó bloqueada para esta fecha.`,
+        unblock: `Bloqueo de ${slot.time} retirado para esta fecha.`,
+        enable: `${slot.time} habilitada solo para esta fecha.`,
+        restore: `${slot.time} vuelve a seguir el horario habitual.`,
+      }[slot.action],
     })
   }
 
@@ -154,7 +123,7 @@ function SchedulePage({ requests, onViewRequests }) {
             <button
               type="button"
               aria-pressed={selectedDateId === date.id}
-              aria-label={`${formatRequestDateId(date.id)}${date.available ? '' : ', día libre'}`}
+              aria-label={`${formatRequestDateId(date.id)}${date.available ? '' : ', sin horas disponibles'}`}
               data-day-off={!date.available || undefined}
               onClick={() => {
                 setSelectedDateId(date.id)
@@ -175,7 +144,7 @@ function SchedulePage({ requests, onViewRequests }) {
           <ScheduleItem
             item={{ ...item, isNext: item.id === nextAppointment?.id }}
             dateLabel={dateLabel}
-            onToggleBlock={() => updateManualBlock(item)}
+            onAvailabilityAction={() => updateAvailability(item)}
             onViewRequests={() =>
               onViewRequests({
                 dateId: selectedDateId,

@@ -18,6 +18,46 @@ const saturdaySchedule = [
   { time: '15:00', status: 'available' },
 ]
 
+export const SLOT_INTERVAL_MINUTES = 60
+export const WEEK_DAYS = [
+  { day: 1, label: 'Lunes' },
+  { day: 2, label: 'Martes' },
+  { day: 3, label: 'Miércoles' },
+  { day: 4, label: 'Jueves' },
+  { day: 5, label: 'Viernes' },
+  { day: 6, label: 'Sábado' },
+  { day: 0, label: 'Domingo' },
+]
+
+export const timeToMinutes = (time) => {
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+export const minutesToTime = (minutes) =>
+  `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+
+// Conserva las horas ofrecidas por los mocks, sin convertir ocupación en cierre.
+export const getDefaultWeeklyHours = () => ({
+  version: 1,
+  days: WEEK_DAYS.map(({ day }) => {
+    const slots = day === 0 ? [] : day === 6 ? saturdaySchedule : weekdaySchedule
+    const intervals = []
+
+    slots.filter((slot) => slot.status !== 'blocked').forEach(({ time }) => {
+      const end = minutesToTime(timeToMinutes(time) + SLOT_INTERVAL_MINUTES)
+      const previous = intervals.at(-1)
+      if (previous?.end === time) {
+        previous.end = end
+      } else {
+        intervals.push({ start: time, end })
+      }
+    })
+
+    return { day, enabled: day !== 0, intervals }
+  }),
+})
+
 const toDateId = (date) => {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')

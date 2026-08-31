@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   getBookingDates,
   getEffectiveTimeSlotsForDate,
+  subscribeAvailability,
 } from '../../services/availabilityService.js'
 import BookingProgress from './BookingProgress'
 import BookingSuccess from './BookingSuccess'
@@ -24,18 +25,22 @@ const initialBooking = {
 function BookingFlow({ services, onExit }) {
   const [currentStep, setCurrentStep] = useState(0)
   const [booking, setBooking] = useState(initialBooking)
-  const dates = useMemo(() => getBookingDates(), [])
-  const slots = useMemo(
-    () =>
-      booking.dateId ? getEffectiveTimeSlotsForDate(booking.dateId) : [],
-    [booking.dateId],
-  )
+  const [, refreshAvailability] = useState(0)
+  useEffect(() => subscribeAvailability(() => refreshAvailability((value) => value + 1)), [])
+  const dates = getBookingDates()
+  const slots = booking.dateId ? getEffectiveTimeSlotsForDate(booking.dateId) : []
   const selectedService = services.find(
     (service) => service.id === booking.serviceId,
   )
 
   const goToStep = (step) => {
-    setCurrentStep(step)
+    const dateAvailable = dates.some((date) => date.id === booking.dateId && date.available)
+    const timeAvailable = slots.some((slot) => slot.time === booking.time && slot.isBookable)
+    // Revalida también si los horarios cambian en otra pestaña durante la reserva.
+    const nextStep = step >= 2 && !dateAvailable
+      ? 1
+      : step >= 3 && !timeAvailable ? 2 : step
+    setCurrentStep(nextStep)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 

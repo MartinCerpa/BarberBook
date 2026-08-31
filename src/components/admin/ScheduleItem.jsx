@@ -6,8 +6,15 @@ const statusLabels = {
   unavailable: 'No disponible',
 }
 
-function ScheduleItem({ item, dateLabel, onToggleBlock, onViewRequests }) {
-  const canToggleBlock = item.status === 'available' || item.isManualBlock
+const actionLabels = {
+  block: 'Bloquear',
+  unblock: 'Desbloquear',
+  enable: 'Habilitar este día',
+  restore: 'Restaurar horario',
+}
+
+function ScheduleItem({ item, dateLabel, onAvailabilityAction, onViewRequests }) {
+  const actionLabel = actionLabels[item.action]
 
   return (
     <article
@@ -27,7 +34,7 @@ function ScheduleItem({ item, dateLabel, onToggleBlock, onViewRequests }) {
               <strong>{statusLabels[item.status]}</strong>
               <span>
                 {item.status === 'available'
-                  ? 'Espacio libre para nuevas solicitudes'
+                  ? item.isEnabledException ? 'Habilitada solo para esta fecha' : 'Espacio libre para nuevas solicitudes'
                   : item.status === 'pending'
                     ? `${item.pendingCount} por revisar`
                     : item.status === 'blocked'
@@ -42,14 +49,14 @@ function ScheduleItem({ item, dateLabel, onToggleBlock, onViewRequests }) {
             {item.isNext && <span>Próximo</span>}
             <span className="status-badge status-badge--confirmed">Confirmada</span>
           </div>
-        ) : canToggleBlock ? (
+        ) : actionLabel ? (
           <button
             className="schedule-item__action"
             type="button"
-            onClick={onToggleBlock}
-            aria-label={`${item.isManualBlock ? 'Desbloquear' : 'Bloquear'} ${item.time} del ${dateLabel}`}
+            onClick={onAvailabilityAction}
+            aria-label={`${actionLabel} ${item.time} del ${dateLabel}`}
           >
-            {item.isManualBlock ? 'Desbloquear' : 'Bloquear'}
+            {actionLabel}
           </button>
         ) : item.status === 'pending' ? (
           <button

@@ -5,6 +5,7 @@ import {
   saveProfilePreferences,
 } from '../services/profilePreferencesService.js'
 import ServicesPage from './ServicesPage'
+import WorkingHoursSettings from '../components/admin/WorkingHoursSettings'
 
 const functionalSettingsItems = [
   {
@@ -17,14 +18,14 @@ const functionalSettingsItems = [
     title: 'Servicios',
     description: 'Administra servicios, precios y disponibilidad.',
   },
+  {
+    id: 'hours',
+    title: 'Horarios de atención',
+    description: 'Define tu semana habitual y sus pausas.',
+  },
 ]
 
 const futureSettingsItems = [
-  {
-    id: 'hours',
-    title: 'Horarios',
-    description: 'Configura tus días y horas de atención.',
-  },
   {
     id: 'bookings',
     title: 'Reservas',
@@ -574,6 +575,10 @@ function SettingsOverview({ onSelect }) {
 
 function SettingsPage() {
   const [activeView, setActiveView] = useState('overview')
+
+  if (activeView === 'hours') {
+    return <WorkingHoursSettings onBack={() => setActiveView('overview')} />
+  }
 
   if (activeView === 'profile') {
     return <ProfileSettingsView onBack={() => setActiveView('overview')} />

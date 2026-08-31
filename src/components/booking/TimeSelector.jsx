@@ -3,6 +3,7 @@ const statusLabels = {
   pending: 'Con solicitudes',
   confirmed: 'No disponible',
   blocked: 'Bloqueado',
+  unavailable: 'No disponible',
 }
 
 function TimeSelector({ slots, selectedTime, onSelect, onBack, onNext }) {
@@ -25,8 +26,8 @@ function TimeSelector({ slots, selectedTime, onSelect, onBack, onNext }) {
       <fieldset className="time-options">
         <legend className="sr-only">Selecciona un horario</legend>
         {slots.map((slot) => {
-          const isSelectable = ['available', 'pending'].includes(slot.status)
-          const isSelected = selectedTime === slot.time
+          const isSelectable = slot.isBookable
+          const isSelected = selectedTime === slot.time && isSelectable
 
           return (
             <label
@@ -48,7 +49,7 @@ function TimeSelector({ slots, selectedTime, onSelect, onBack, onNext }) {
         })}
       </fieldset>
 
-      {selectedSlot?.status === 'pending' && (
+      {selectedSlot?.isBookable && selectedSlot.status === 'pending' && (
         <div className="pending-warning" role="status">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M12 8v5M12 17h.01M10.3 3.8 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
@@ -69,7 +70,7 @@ function TimeSelector({ slots, selectedTime, onSelect, onBack, onNext }) {
           className="button button--primary"
           type="button"
           onClick={onNext}
-          disabled={!selectedTime}
+          disabled={!selectedSlot?.isBookable}
         >
           Continuar
         </button>

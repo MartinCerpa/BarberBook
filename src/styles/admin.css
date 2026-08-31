@@ -2465,6 +2465,207 @@ button.settings-hub__option {
   max-width: 66rem;
 }
 
+.working-hours-page {
+  max-width: 66rem;
+}
+
+.working-hours-page .admin-page__heading {
+  margin-bottom: 1rem;
+}
+
+.working-hours-page .admin-page__heading h1 {
+  font-size: clamp(2.3rem, 7vw, 4rem);
+}
+
+.working-hours__note,
+.working-hours__closed {
+  margin: 0 0 1rem;
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.working-hours__days {
+  display: grid;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+.working-hours__day {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-small);
+  background: var(--color-surface);
+}
+
+.working-hours__day > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.65rem;
+}
+
+.working-hours__day h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.working-hours__toggle,
+.working-hours__add,
+.working-hours__remove {
+  min-height: 2.75rem;
+  padding: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 0.65rem;
+  background: transparent;
+  color: var(--color-accent);
+  font: inherit;
+  font-size: 0.7rem;
+  font-weight: 800;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--transition), border-color var(--transition);
+}
+
+.working-hours__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-muted);
+}
+
+.working-hours__toggle > span {
+  width: 1.85rem;
+  padding: 0.15rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-strong);
+}
+
+.working-hours__toggle > span::after {
+  display: block;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--color-text-muted);
+  content: '';
+  transition: transform var(--transition), background-color var(--transition);
+}
+
+.working-hours__toggle[aria-checked='true'] {
+  color: var(--color-accent);
+}
+
+.working-hours__toggle[aria-checked='true'] > span::after {
+  background: var(--color-accent);
+  transform: translateX(0.65rem);
+}
+
+.working-hours__intervals {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.working-hours__interval {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) 2.75rem;
+  align-items: end;
+  gap: 0.3rem;
+}
+
+.working-hours__interval label {
+  display: grid;
+  min-width: 0;
+  gap: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+}
+
+.working-hours__interval input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.75rem;
+  padding: 0.4rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.6rem;
+  background: var(--color-background);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.working-hours__interval input[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.working-hours__separator {
+  align-self: end;
+  padding-bottom: 0.8rem;
+  color: var(--color-text-muted);
+  font-size: 0.65rem;
+}
+
+.working-hours__remove {
+  font-size: 1.2rem;
+}
+
+.working-hours__add {
+  margin-top: 0.4rem;
+  padding-inline: 0;
+}
+
+.working-hours__closed {
+  margin-bottom: 0;
+}
+
+.working-hours button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.working-hours input:focus-visible,
+.working-hours button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.working-hours__error,
+.working-hours__actions p[data-type='error'] {
+  color: var(--color-error);
+}
+
+.working-hours__error {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+}
+
+.working-hours__actions {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.working-hours__actions p {
+  margin: 0;
+  color: var(--color-success);
+  font-size: 0.78rem;
+}
+
+@media (min-width: 48rem) {
+  .working-hours__days {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .working-hours__actions {
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+  }
+}
+
 .services-page__heading {
   margin-bottom: 1rem;
 }
@@ -4326,6 +4527,16 @@ button.settings-hub__option {
     font-size: 0.85rem;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .schedule-page .schedule-item--unavailable .schedule-item__content strong {
+    white-space: normal;
+  }
+
+  .schedule-page .schedule-item__action {
+    max-width: 6.5rem;
+    white-space: normal;
+    line-height: 1.35;
   }
 
   .schedule-page .schedule-item__content > div:first-child span {
