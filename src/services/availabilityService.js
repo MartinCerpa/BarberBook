@@ -22,11 +22,18 @@ import {
   saveEnabledSlots,
 } from './availabilityPreferencesService.js'
 import { getWorkingHours, WORKING_HOURS_STORAGE_KEY } from './workingHoursPreferencesService.js'
+import {
+  getReservationPreferences,
+  isRequestExpired,
+  RESERVATION_PREFERENCES_CHANGE_EVENT,
+  RESERVATION_PREFERENCES_STORAGE_KEY,
+} from './reservationPreferencesService.js'
 
 const getSlotId = (date, time) => date + '|' + time
 const storageKeys = new Set([
   BLOCKED_SLOTS_STORAGE_KEY, ENABLED_SLOTS_STORAGE_KEY, WORKING_HOURS_STORAGE_KEY,
   BOOKINGS_STORAGE_KEY,
+  RESERVATION_PREFERENCES_STORAGE_KEY,
 ])
 
 export const subscribeAvailability = (onChange) => {
@@ -36,10 +43,12 @@ export const subscribeAvailability = (onChange) => {
   window.addEventListener('storage', onStorage)
   window.addEventListener(AVAILABILITY_CHANGE_EVENT, onChange)
   window.addEventListener(BOOKINGS_CHANGE_EVENT, onChange)
+  window.addEventListener(RESERVATION_PREFERENCES_CHANGE_EVENT, onChange)
   return () => {
     window.removeEventListener('storage', onStorage)
     window.removeEventListener(AVAILABILITY_CHANGE_EVENT, onChange)
     window.removeEventListener(BOOKINGS_CHANGE_EVENT, onChange)
+    window.removeEventListener(RESERVATION_PREFERENCES_CHANGE_EVENT, onChange)
   }
 }
 
@@ -49,7 +58,8 @@ export const getAvailabilityRequestsForDate = (dateId, requests = readBookingSta
     getRequestDateId(request, referenceDateId, requestContext) === dateId &&
     request.source !== 'schedule-demo' &&
     (['confirmed', 'completed', 'no_show', 'cancelled'].includes(request.status) ||
-      (request.status === 'pending' && !isHistoricalRequest(request, requestContext))),
+      (request.status === 'pending' && !isRequestExpired(request) &&
+        !isHistoricalRequest(request, requestContext))),
   )
 }
 
@@ -131,6 +141,34 @@ export const getBookingDates = (totalDays, requests) =>
     return { ...date, available, note: available ? 'Disponible' : 'Sin horas disponibles' }
   })
 
+export const getEffectiveBookingTimeSlotsForDate = (
+  dateId,
+  { requests, now = new Date() } = {},
+) => {
+  const preferences = getReservationPreferences()
+  const minimumTime = now.getTime() + preferences.minimumAdvanceMinutes * 60000
+  return getEffectiveTimeSlotsForDate(dateId, requests).map((slot) => {
+    const startsAt = new Date(`${dateId}T${slot.time}:00`).getTime()
+    const meetsMinimumAdvance = Number.isFinite(startsAt) && startsAt >= minimumTime
+    return {
+      ...slot,
+      isBookable: slot.isBookable && meetsMinimumAdvance,
+      bookingStatus: slot.isBookable && !meetsMinimumAdvance ? 'unavailable' : slot.bookingStatus,
+      bookingRestriction: slot.isBookable && !meetsMinimumAdvance ? 'minimum-advance' : null,
+    }
+  })
+}
+
+export const getPublicBookingDates = ({ requests, now = new Date() } = {}) => {
+  const preferences = getReservationPreferences()
+  return getBaseBookingDates(preferences.bookingHorizonDays).map((date) => {
+    const dayRequests = getAvailabilityRequestsForDate(date.id, requests)
+    const available = getEffectiveBookingTimeSlotsForDate(date.id, { requests: dayRequests, now })
+      .some((slot) => slot.isBookable)
+    return { ...date, available, note: available ? 'Disponible' : 'Sin horas disponibles' }
+  })
+}
+
 const hasAction = (date, time, action, requestsForDate) =>
   getEffectiveTimeSlotsForDate(date, requestsForDate).some((slot) =>
     slot.time === time && slot.action === action,
@@ -165,6 +203,8 @@ export const availabilityService = {
   getBookingDates,
   getAvailabilityRequestsForDate,
   getEffectiveTimeSlotsForDate,
+  getEffectiveBookingTimeSlotsForDate,
+  getPublicBookingDates,
   blockTimeSlot,
   unblockTimeSlot,
   enableTimeSlot,

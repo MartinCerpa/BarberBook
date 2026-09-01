@@ -6,6 +6,7 @@ import {
 } from '../services/profilePreferencesService.js'
 import ServicesPage from './ServicesPage'
 import WorkingHoursSettings from '../components/admin/WorkingHoursSettings'
+import ReservationSettings from '../components/admin/ReservationSettings'
 
 const functionalSettingsItems = [
   {
@@ -23,14 +24,14 @@ const functionalSettingsItems = [
     title: 'Horarios de atención',
     description: 'Define tu semana habitual y sus pausas.',
   },
-]
-
-const futureSettingsItems = [
   {
     id: 'bookings',
     title: 'Reservas',
     description: 'Define reglas de reserva, anticipación y cancelaciones.',
   },
+]
+
+const futureSettingsItems = [
   {
     id: 'preferences',
     title: 'Preferencias',
@@ -578,6 +579,10 @@ function SettingsPage() {
 
   if (activeView === 'hours') {
     return <WorkingHoursSettings onBack={() => setActiveView('overview')} />
+  }
+
+  if (activeView === 'bookings') {
+    return <ReservationSettings onBack={() => setActiveView('overview')} />
   }
 
   if (activeView === 'profile') {

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { createBooking, createBookingId } from '../../services/bookingService.js'
 import {
-  getBookingDates,
-  getEffectiveTimeSlotsForDate,
+  getEffectiveBookingTimeSlotsForDate,
+  getPublicBookingDates,
   subscribeAvailability,
 } from '../../services/availabilityService.js'
 import BookingProgress from './BookingProgress'
@@ -30,10 +30,11 @@ function BookingFlow({ services, onExit }) {
   const submitting = useRef(false)
   const [submissionError, setSubmissionError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submittedBooking, setSubmittedBooking] = useState(null)
   const [, refreshAvailability] = useState(0)
   useEffect(() => subscribeAvailability(() => refreshAvailability((value) => value + 1)), [])
-  const dates = getBookingDates()
-  const slots = booking.dateId ? getEffectiveTimeSlotsForDate(booking.dateId) : []
+  const dates = getPublicBookingDates()
+  const slots = booking.dateId ? getEffectiveBookingTimeSlotsForDate(booking.dateId) : []
   const selectedService = services.find(
     (service) => service.id === booking.serviceId,
   )
@@ -84,7 +85,7 @@ function BookingFlow({ services, onExit }) {
         setSubmissionError(result.error)
         return
       }
-      // El éxito se muestra solo después de guardar una solicitud pendiente, nunca una confirmación.
+      setSubmittedBooking(result.booking)
       setCurrentStep(5)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch {
@@ -101,6 +102,7 @@ function BookingFlow({ services, onExit }) {
         <div className="container booking-shell">
           <BookingSuccess
             booking={booking}
+            submittedBooking={submittedBooking}
             service={selectedService}
             onReturn={onExit}
           />

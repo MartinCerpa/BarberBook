@@ -10,9 +10,15 @@ import {
 import {
   getClientHistory, getClientSummary, getCustomersSnapshot, setClientTrustStatus,
 } from '../src/services/customerService.js'
-import { getEffectiveTimeSlotsForDate, blockTimeSlot } from '../src/services/availabilityService.js'
+import {
+  blockTimeSlot, getBookingDates, getEffectiveBookingTimeSlotsForDate,
+  getEffectiveTimeSlotsForDate, getPublicBookingDates,
+} from '../src/services/availabilityService.js'
 import { getServices, saveServices } from '../src/services/serviceService.js'
 import { normalizeCustomerPhone } from '../src/utils/customerUtils.js'
+import {
+  DEFAULT_RESERVATION_PREFERENCES, saveReservationPreferences,
+} from '../src/services/reservationPreferencesService.js'
 
 const originalWindow = globalThis.window
 let storage
@@ -31,8 +37,11 @@ afterEach(() => {
 
 const dateId = '2030-01-07'
 const at = (time) => new Date(`${dateId}T${time}:00`)
-const request = (id = 'request-a1', time = '15:00', phone = '81895314') => createBooking({
+const request = (id = 'request-a1', time = '15:00', phone = '81895314', now) => createBooking({
   id, serviceId: 'haircut', dateId, time, customer: { name: 'Cliente A1', phone },
+}, now)
+const configureReservations = (overrides) => saveReservationPreferences({
+  ...DEFAULT_RESERVATION_PREFERENCES, ...overrides,
 })
 const confirmed = async (id, time, phone) => {
   const created = await request(id, time, phone)
@@ -249,4 +258,133 @@ test('fechas persistidas no se mueven y una atención anterior queda accesible p
   assert.equal(getRequestsSnapshot().find((record) => record.id === booking.id).dateId, dateId)
   outcome(booking, 'completed')
   assert.equal(getUnfinishedAppointmentDates(new Date('2030-01-08T09:00:00')).includes(dateId), false)
+})
+
+test('modo manual mantiene nuevas solicitudes pendientes y sin vencimiento por default', async () => {
+  const created = await request('request-manual', '15:00', '81895314', at('14:00'))
+  assert.equal(created.success, true)
+  assert.equal(created.booking.status, 'pending')
+  assert.equal(created.booking.expiresAt, null)
+  assert.equal(created.booking.confirmationOrigin, 'manual')
+})
+
+test('modo automático confirma un cliente normal y continúa por el ciclo A1', async () => {
+  configureReservations({ confirmationMode: 'automatic' })
+  const created = await request('request-automatic', '15:00', '81895314', at('14:00'))
+  assert.equal(created.success, true)
+  assert.equal(created.booking.status, 'confirmed')
+  assert.equal(created.booking.confirmationOrigin, 'automatic')
+  assert.equal(created.booking.appointmentId, `appointment-${created.booking.id}`)
+  assert.equal(outcome(created.booking, 'completed', '15:45').success, true)
+  const summary = getClientSummary(created.booking.customerId)
+  assert.equal(summary.completedAppointments, 1)
+  assert.equal(summary.totalSpent, 12000)
+  assert.equal(summary.history[0].outcome, 'completed')
+})
+
+test('automático deja pendiente al cliente que requiere aprobación manual', async () => {
+  const first = await request('request-identity', '15:00', '81895314', at('14:00'))
+  setClientTrustStatus(first.booking.customerId, 'requires_manual_approval')
+  configureReservations({ confirmationMode: 'automatic' })
+  const restricted = await request('request-restricted', '16:00', '81895314', at('14:01'))
+  assert.equal(restricted.success, true)
+  assert.equal(restricted.booking.status, 'pending')
+  assert.equal(restricted.booking.confirmationOrigin, 'manual')
+  assert.equal(restricted.booking.expiresAt, null)
+  assert.equal(acceptRequest(restricted.booking.id, at('14:02')).success, true)
+})
+
+test('automático revalida reglas efectivas y rechaza un slot bloqueado', async () => {
+  configureReservations({ confirmationMode: 'automatic' })
+  assert.equal(blockTimeSlot(dateId, '15:00').success, true)
+  const result = await request('request-blocked-auto', '15:00', '81895314', at('14:00'))
+  assert.equal(result.success, false)
+  assert.match(result.error, /ya no está disponible/i)
+})
+
+test('operación central deja una sola confirmada para dos envíos del mismo slot', async () => {
+  configureReservations({ confirmationMode: 'automatic' })
+  const results = await Promise.all([
+    request('request-first-auto', '15:00', '81895314', at('14:00')),
+    request('request-second-auto', '15:00', '12345678', at('14:00')),
+  ])
+  assert.equal(results.filter((result) => result.success).length, 1)
+  assert.equal(readBookingState().records.filter((record) => record.dateId === dateId &&
+    record.time === '15:00' && record.status === 'confirmed' && record.source === 'request').length, 1)
+})
+
+test('solicitud manual guarda createdAt y expiresAt configurado', async () => {
+  configureReservations({ requestExpirationMinutes: 30 })
+  const created = await request('request-expiring', '15:00', '81895314', at('14:00'))
+  assert.equal(created.booking.createdAt, at('14:00').toISOString())
+  assert.equal(created.booking.expiresAt, at('14:30').toISOString())
+})
+
+test('solicitud vencida no puede aceptarse y queda registrada como expirada', async () => {
+  configureReservations({ requestExpirationMinutes: 15 })
+  const created = await request('request-expired', '15:00', '81895314', at('14:00'))
+  const accepted = acceptRequest(created.booking.id, at('14:15'))
+  assert.equal(accepted.success, false)
+  assert.match(accepted.error, /venció/i)
+  const expired = getRequestsSnapshot(at('14:15')).find((item) => item.id === created.booking.id)
+  assert.equal(expired.status, 'expired')
+  assert.equal(expired.expiredAt, at('14:15').toISOString())
+})
+
+test('expirada deja de ocupar disponibilidad y no genera historial de atención', async () => {
+  configureReservations({ requestExpirationMinutes: 15 })
+  const created = await request('request-release', '15:00', '81895314', at('14:00'))
+  assert.equal(getEffectiveTimeSlotsForDate(dateId).find((slot) => slot.time === '15:00').pendingCount, 1)
+  getRequestsSnapshot(at('14:15'))
+  const slot = getEffectiveTimeSlotsForDate(dateId).find((item) => item.time === '15:00')
+  assert.equal(slot.status, 'available')
+  assert.equal(slot.isBookable, true)
+  assert.deepEqual(getClientHistory(created.booking.customerId), [])
+})
+
+test('cancelación dentro del plazo es normal y no penaliza métricas ni confianza', async () => {
+  configureReservations({ confirmationMode: 'automatic', cancellationNoticeMinutes: 20 })
+  const created = await request('request-cancelled-on-time', '15:00', '81895314', at('14:00'))
+  assert.equal(outcome(created.booking, 'cancelled', '14:40').success, true)
+  const record = getRequestsSnapshot(at('14:40')).find((item) => item.id === created.booking.id)
+  const summary = getClientSummary(created.booking.customerId)
+  assert.equal(record.isLateCancellation, false)
+  assert.equal(summary.noShows, 0)
+  assert.equal(summary.completedAppointments, 0)
+  assert.equal(summary.totalSpent, 0)
+  assert.equal(summary.trustStatus, 'normal')
+})
+
+test('cancelación después del plazo queda marcada tardía sin sumar no_show ni restringir', async () => {
+  configureReservations({ confirmationMode: 'automatic', cancellationNoticeMinutes: 20 })
+  const created = await request('request-cancelled-late', '15:00', '81895314', at('14:00'))
+  assert.equal(outcome(created.booking, 'cancelled', '14:40').success, true)
+  assert.equal(getRequestsSnapshot().find((item) => item.id === created.booking.id).isLateCancellation, false)
+  const second = await request('request-cancelled-late-2', '16:00', '81895314', at('14:41'))
+  assert.equal(outcome(second.booking, 'cancelled', '15:41').success, true)
+  const record = getRequestsSnapshot().find((item) => item.id === second.booking.id)
+  const summary = getClientSummary(second.booking.customerId)
+  assert.equal(record.isLateCancellation, true)
+  assert.equal(summary.history.find((item) => item.appointmentId === second.booking.appointmentId).isLateCancellation, true)
+  assert.equal(summary.lateCancellations, 1)
+  assert.equal(summary.noShows, 0)
+  assert.equal(summary.trustStatus, 'normal')
+})
+
+test('anticipación mínima filtra UI pública y vuelve a comprobarse al crear', async () => {
+  configureReservations({ minimumAdvanceMinutes: 60 })
+  const slots = getEffectiveBookingTimeSlotsForDate(dateId, { requests: [], now: at('14:30') })
+  assert.equal(slots.find((slot) => slot.time === '15:00').isBookable, false)
+  assert.equal(slots.find((slot) => slot.time === '16:00').isBookable, true)
+  assert.equal((await request('request-too-soon', '15:00', '81895314', at('14:30'))).success, false)
+  assert.equal((await request('request-exact-advance', '15:00', '81895314', at('14:00'))).success, true)
+})
+
+test('horizonte público configurado cambia fechas sin limitar Agenda central', () => {
+  configureReservations({ bookingHorizonDays: 7 })
+  assert.equal(getPublicBookingDates({ requests: [], now: at('14:00') }).length, 7)
+  configureReservations({ bookingHorizonDays: 30 })
+  assert.equal(getPublicBookingDates({ requests: [], now: at('14:00') }).length, 30)
+  // La API usada por Agenda conserva su total explícito o su fallback histórico.
+  assert.equal(getBookingDates(undefined, []).length, 14)
 })

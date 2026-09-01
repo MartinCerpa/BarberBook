@@ -91,7 +91,9 @@ function ScheduleItem({ item, dateLabel, onAvailabilityAction, onViewRequests, o
       )}
       {item.cancelledAppointments?.length > 0 && (
         <p className="schedule-item__cancelled">
-          {item.cancelledAppointments.map((appointment) => `Cancelada · ${appointment.customerName}`).join(' / ')}
+          {item.cancelledAppointments.map((appointment) =>
+            `${appointment.isLateCancellation ? 'Cancelación tardía' : 'Cancelada'} · ${appointment.customerName}`,
+          ).join(' / ')}
         </p>
       )}
     </article>

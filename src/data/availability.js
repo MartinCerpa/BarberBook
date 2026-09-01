@@ -19,6 +19,7 @@ const saturdaySchedule = [
 ]
 
 export const SLOT_INTERVAL_MINUTES = 60
+export const DEFAULT_BOOKING_HORIZON_DAYS = 14
 export const WEEK_DAYS = [
   { day: 1, label: 'Lunes' },
   { day: 2, label: 'Martes' },
@@ -66,7 +67,7 @@ const toDateId = (date) => {
   return `${year}-${month}-${day}`
 }
 
-export const getBookingDates = (totalDays = 14) => {
+export const getBookingDates = (totalDays = DEFAULT_BOOKING_HORIZON_DAYS) => {
   const today = new Date()
   today.setHours(12, 0, 0, 0)
 

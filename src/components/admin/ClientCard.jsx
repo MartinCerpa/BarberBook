@@ -162,7 +162,9 @@ function ClientCard({ client, isExpanded, onToggle, onRestoreTrust }) {
               <ol tabIndex={0} aria-label="Atenciones registradas">{client.history.map((entry) => (
                 <li key={entry.appointmentId}>
                   <div><time dateTime={`${entry.date}T${entry.time}`}>{formatDate(entry.date, shortDateFormatter)} · {entry.time}</time>
-                    <span className={`status-badge status-badge--${entry.outcome}`}>{outcomeLabels[entry.outcome]}</span></div>
+                    <span className={`status-badge status-badge--${entry.outcome}`}>
+                      {entry.isLateCancellation ? 'Cancelación tardía' : outcomeLabels[entry.outcome]}
+                    </span></div>
                   <strong>{entry.service}</strong>
                   <span>{entry.price === null ? 'Precio no registrado' : formatCurrency(entry.price)}</span>
                 </li>

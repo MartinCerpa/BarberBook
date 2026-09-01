@@ -1,4 +1,4 @@
-const historicalStatuses = new Set(['rejected', 'cancelled', 'completed', 'no_show'])
+const historicalStatuses = new Set(['rejected', 'expired', 'cancelled', 'completed', 'no_show'])
 
 export const getLocalDateId = (date = new Date()) => [
   date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0'),

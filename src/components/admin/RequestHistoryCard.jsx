@@ -4,16 +4,16 @@ const statusLabels = {
   pending: 'Sin resolver',
   confirmed: 'Confirmada',
   rejected: 'Rechazada',
+  expired: 'Expirada',
   cancelled: 'Cancelada',
   completed: 'Completada',
   no_show: 'No asistió',
 }
 
 function RequestHistoryCard({ request, context }) {
-  const visualStatus =
+  const visualStatus = request.status === 'expired' ||
     request.status === 'pending' && isPastRequest(request, context)
-      ? 'expired'
-      : request.status
+    ? 'expired' : request.status
 
   return (
     <article className={`request-history-card request-history-card--${visualStatus}`}>
@@ -23,9 +23,8 @@ function RequestHistoryCard({ request, context }) {
           <h2>{request.customerName}</h2>
         </div>
         <span className={`status-badge status-badge--${visualStatus}`}>
-          {visualStatus === 'expired'
-            ? 'Sin resolver'
-            : statusLabels[request.status]}
+          {visualStatus === 'expired' ? 'Expirada' : request.isLateCancellation
+            ? 'Cancelación tardía' : statusLabels[request.status]}
         </span>
       </header>
 

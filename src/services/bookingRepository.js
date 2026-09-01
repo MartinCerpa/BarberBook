@@ -13,7 +13,7 @@ import { isValidDateId, isValidTime } from './availabilityPreferencesService.js'
 export const BOOKINGS_STORAGE_KEY = 'barberbook:bookings:v1'
 export const BOOKINGS_CHANGE_EVENT = 'barberbook:bookings-change'
 export const FINAL_OUTCOMES = ['completed', 'cancelled', 'no_show']
-const statuses = new Set(['pending', 'confirmed', 'rejected', ...FINAL_OUTCOMES])
+const statuses = new Set(['pending', 'confirmed', 'rejected', 'expired', ...FINAL_OUTCOMES])
 const copy = (value) => structuredClone(value)
 const getStorage = () => {
   try { return typeof window === 'undefined' ? null : window.localStorage } catch { return null }
@@ -114,12 +114,20 @@ const validState = (state) => {
       typeof record.phone !== 'string' || !['request', 'schedule-demo'].includes(record.source) ||
       !Number.isInteger(record.duration) || record.duration < 1 || record.duration > 480 ||
       (record.price !== null && (!Number.isInteger(record.price) || record.price < 0)) ||
-      !Number.isInteger(record.revision) || record.revision < 0) return false
+      !Number.isInteger(record.revision) || record.revision < 0 ||
+      (record.expiresAt !== undefined && record.expiresAt !== null &&
+        !Number.isFinite(Date.parse(record.expiresAt))) ||
+      (record.expiredAt !== undefined && !Number.isFinite(Date.parse(record.expiredAt))) ||
+      (record.confirmationOrigin !== undefined &&
+        !['manual', 'automatic'].includes(record.confirmationOrigin)) ||
+      (record.isLateCancellation !== undefined && typeof record.isLateCancellation !== 'boolean')) return false
     if (record.appointmentId) {
       if (record.appointmentId !== `appointment-${record.id}` || appointmentIds.has(record.appointmentId)) return false
       appointmentIds.add(record.appointmentId)
     } else if (record.status === 'confirmed' || FINAL_OUTCOMES.includes(record.status)) return false
     if (FINAL_OUTCOMES.includes(record.status) && !Number.isFinite(Date.parse(record.outcomeRecordedAt))) return false
+    if (record.status === 'expired' && !Number.isFinite(Date.parse(record.expiredAt))) return false
+    if (record.status !== 'cancelled' && record.isLateCancellation === true) return false
     recordIds.add(record.id)
     return true
   })

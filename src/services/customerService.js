@@ -13,6 +13,7 @@ const historyFromState = (state, customerId) => state.records
     appointmentId: record.appointmentId, date: record.dateId, time: record.time,
     serviceId: record.serviceId, service: record.service, price: record.price,
     duration: record.duration, outcome: record.status, recordedAt: record.outcomeRecordedAt,
+    isLateCancellation: Boolean(record.isLateCancellation),
   }))
 
 const summaryFromState = (state, customer, now) => {
@@ -29,6 +30,7 @@ const summaryFromState = (state, customer, now) => {
     totalAppointments: appointments.length,
     totalSpent: completed.reduce((total, entry) => total + entry.price, 0),
     noShows: history.filter((entry) => entry.outcome === 'no_show').length,
+    lateCancellations: history.filter((entry) => entry.isLateCancellation).length,
     nextAppointment: next ? { date: next.dateId, time: next.time, service: next.service } : null,
     favoriteService: customer.favoriteService || 'Por definir',
   }

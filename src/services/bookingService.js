@@ -2,20 +2,47 @@ import {
   FINAL_OUTCOMES, findOrCreateCustomer, readBookingState,
   readStateForAppointment, saveBookingState, subscribeBookings,
 } from './bookingRepository.js'
-import { getEffectiveTimeSlotsForDate } from './availabilityService.js'
+import {
+  getEffectiveBookingTimeSlotsForDate, getEffectiveTimeSlotsForDate,
+} from './availabilityService.js'
 import { getServiceById } from './serviceService.js'
 import { isValidDateId, isValidTime } from './availabilityPreferencesService.js'
 import { formatRequestDateId, getLocalDateId } from '../utils/requestUtils.js'
 import { normalizeCustomerPhone } from '../utils/customerUtils.js'
+import {
+  getRequestExpiresAt, getReservationPreferences, isRequestExpired,
+} from './reservationPreferencesService.js'
 
 export { subscribeBookings }
 export const outcomeLabels = { completed: 'Completada', cancelled: 'Cancelada', no_show: 'No asistió' }
 const failure = (error) => ({ success: false, error })
 const storageFailure = () => failure('No pudimos guardar el cambio en este navegador. Inténtalo de nuevo.')
 
-export const getRequestsSnapshot = () => readBookingState().records
-  .filter((record) => record.source !== 'schedule-demo')
-  .map((record) => ({ ...record, date: formatRequestDateId(record.dateId) }))
+const expireRequestsInState = (state, now = new Date()) => {
+  let changed = false
+  state.records = state.records.map((record) => {
+    if (!isRequestExpired(record, now)) return record
+    changed = true
+    return { ...record, status: 'expired', expiredAt: now.toISOString(), revision: record.revision + 1 }
+  })
+  return changed
+}
+
+export const expirePendingRequests = (now = new Date()) => {
+  const state = readBookingState()
+  const changed = expireRequestsInState(state, now)
+  if (!changed) return { success: true, changed: false }
+  if (!saveBookingState(state).success) return storageFailure()
+  return { success: true, changed: true }
+}
+
+export const getRequestsSnapshot = (now = new Date()) => {
+  const state = readBookingState()
+  if (expireRequestsInState(state, now)) saveBookingState(state)
+  return state.records
+    .filter((record) => record.source !== 'schedule-demo')
+    .map((record) => ({ ...record, date: formatRequestDateId(record.dateId) }))
+}
 
 export const getBookings = async () => getRequestsSnapshot()
 export const getAppointments = () => readBookingState().records.filter((record) =>
@@ -30,9 +57,12 @@ export const getUnfinishedAppointmentDates = (now = new Date()) => [...new Set(
 export const createBookingId = () => `request-local-${typeof crypto !== 'undefined' && crypto.randomUUID
   ? crypto.randomUUID() : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`}`
 
-const isSlotBookable = (dateId, time, state) => {
+const isSlotBookable = (dateId, time, state, { applyPublicRules = false, now = new Date() } = {}) => {
   const records = state.records.filter((record) => record.source !== 'schedule-demo' && record.dateId === dateId)
-  return getEffectiveTimeSlotsForDate(dateId, records).some((slot) => slot.time === time && slot.isBookable)
+  const slots = applyPublicRules
+    ? getEffectiveBookingTimeSlotsForDate(dateId, { requests: records, now })
+    : getEffectiveTimeSlotsForDate(dateId, records)
+  return slots.some((slot) => slot.time === time && slot.isBookable)
 }
 
 const commitRecord = (state, current, changes, undoable = false) => {
@@ -45,7 +75,7 @@ const commitRecord = (state, current, changes, undoable = false) => {
   }
 }
 
-export const createBooking = async (bookingData) => {
+export const createBooking = async (bookingData, now = new Date()) => {
   const phone = normalizeCustomerPhone(bookingData.customer?.phone)
   const name = bookingData.customer?.name?.trim()
   if (!phone || !name || name.length < 2 || name.length > 100 ||
@@ -55,7 +85,11 @@ export const createBooking = async (bookingData) => {
   const service = await getServiceById(bookingData.serviceId)
   if (!service?.active) return failure('El servicio ya no está disponible. Elige otro servicio.')
   // Lee después de la consulta: dos envíos concurrentes no reutilizan una copia desactualizada.
-  const state = readBookingState()
+  let state = readBookingState()
+  if (expireRequestsInState(state, now)) {
+    if (!saveBookingState(state).success) return storageFailure()
+    state = readBookingState()
+  }
   const id = bookingData.id ?? createBookingId()
   const existing = state.records.find((record) => record.id === id)
   if (existing) {
@@ -64,31 +98,46 @@ export const createBooking = async (bookingData) => {
       ? { success: true, changed: false, booking: existing }
       : failure('Esta solicitud ya fue utilizada. Vuelve a iniciar la reserva.')
   }
-  if (!isSlotBookable(bookingData.dateId, bookingData.time, state)) {
+  if (!isSlotBookable(bookingData.dateId, bookingData.time, state, { applyPublicRules: true, now })) {
     return failure('La hora elegida ya no está disponible. Selecciona otra hora.')
   }
   const customer = findOrCreateCustomer(state, { name, phone, createdAt: getLocalDateId() })
+  const preferences = getReservationPreferences()
+  const automaticallyConfirmed = preferences.confirmationMode === 'automatic' &&
+    customer.trustStatus !== 'requires_manual_approval'
+  const createdAt = now.toISOString()
   const booking = {
-    id, appointmentId: null, customerId: customer.id, customerName: name, phone,
+    id, appointmentId: automaticallyConfirmed ? `appointment-${id}` : null,
+    customerId: customer.id, customerName: name, phone,
     serviceId: service.id, service: service.name, price: service.price,
     duration: service.duration, suggestedDuration: service.duration,
     dateId: bookingData.dateId, time: bookingData.time,
-    status: 'pending', source: 'request', createdAt: getLocalDateId(), revision: 0,
+    status: automaticallyConfirmed ? 'confirmed' : 'pending', source: 'request', createdAt,
+    expiresAt: automaticallyConfirmed ? null : getRequestExpiresAt(createdAt, preferences),
+    confirmationOrigin: automaticallyConfirmed ? 'automatic' : 'manual',
+    confirmedAt: automaticallyConfirmed ? createdAt : undefined,
+    revision: 0,
   }
   state.records.push(booking)
   return saveBookingState(state).success ? { success: true, changed: true, booking } : storageFailure()
 }
 
-export const acceptRequest = (bookingId) => {
+export const acceptRequest = (bookingId, now = new Date()) => {
   const state = readBookingState()
+  const expiredChanged = expireRequestsInState(state, now)
   const current = state.records.find((record) => record.id === bookingId)
   if (!current) return failure('No encontramos esta solicitud.')
   if (current.status === 'confirmed') return { success: true, changed: false, booking: current }
+  if (current.status === 'expired') {
+    if (expiredChanged && !saveBookingState(state).success) return storageFailure()
+    return failure('Esta solicitud venció y ya no puede confirmarse.')
+  }
   if (current.status !== 'pending') return failure('Solo se puede confirmar una solicitud pendiente.')
   if (!Number.isInteger(current.price) || current.price < 0) return failure('La solicitud no tiene un precio de servicio válido.')
   if (!isSlotBookable(current.dateId, current.time, state)) return failure('Este horario ya no se puede confirmar.')
   return commitRecord(state, current, {
-    status: 'confirmed', appointmentId: `appointment-${current.id}`, confirmedAt: new Date().toISOString(),
+    status: 'confirmed', appointmentId: `appointment-${current.id}`,
+    confirmedAt: now.toISOString(), confirmationOrigin: 'manual',
   }, true)
 }
 
@@ -130,7 +179,14 @@ export const recordAppointmentOutcome = ({ appointmentId, outcome }, now = new D
         ? { ...customer, trustStatus: 'requires_manual_approval' } : customer)
     }
   }
-  return commitRecord(state, current, { status: outcome, outcomeRecordedAt: now.toISOString() })
+  const changes = { status: outcome, outcomeRecordedAt: now.toISOString() }
+  if (outcome === 'cancelled') {
+    const start = new Date(`${current.dateId}T${current.time}:00`).getTime()
+    const notice = getReservationPreferences().cancellationNoticeMinutes
+    changes.isLateCancellation = now.getTime() > start - notice * 60000
+    changes.cancellationNoticeMinutes = notice
+  }
+  return commitRecord(state, current, changes)
 }
 
 export const updateBookingStatus = (bookingId, status) => {
@@ -158,7 +214,12 @@ export const undoBookingChange = (token) => {
   if (token.previous.status === 'confirmed' && !isSlotBookable(current.dateId, token.previous.time, state)) {
     return failure('No se puede restaurar la reserva porque el horario ya no está disponible.')
   }
-  return commitRecord(state, current, { ...token.previous, outcomeRecordedAt: token.previous.outcomeRecordedAt })
+  return commitRecord(state, current, {
+    ...token.previous,
+    outcomeRecordedAt: token.previous.outcomeRecordedAt,
+    isLateCancellation: token.previous.isLateCancellation,
+    cancellationNoticeMinutes: token.previous.cancellationNoticeMinutes,
+  })
 }
 
 export const updateBookingDetails = (bookingId, changes) => {
@@ -194,4 +255,5 @@ export const bookingService = {
   updateBookingDetails,
   undoBookingChange,
   subscribeBookings,
+  expirePendingRequests,
 }
