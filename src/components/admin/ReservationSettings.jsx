@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import {
   BOOKING_HORIZON_OPTIONS,
   getReservationPreferences,
@@ -9,30 +9,102 @@ import {
 
 const expirationLabels = { 15: '15 minutos', 30: '30 minutos', 60: '60 minutos', none: 'Sin vencimiento' }
 const advanceLabels = { 0: 'Sin restricción adicional', 30: '30 minutos', 60: '1 hora', 120: '2 horas' }
+const SAVED_FEEDBACK_DELAY = 140
+const SAVED_FEEDBACK_DURATION = 1800
+const ERROR_FEEDBACK_DURATION = 3500
 
 function ReservationSettings({ onBack }) {
-  const [savedPreferences, setSavedPreferences] = useState(getReservationPreferences)
-  const [preferences, setPreferences] = useState(savedPreferences)
-  const [feedback, setFeedback] = useState(null)
-  const [error, setError] = useState(null)
-  const hasChanges = JSON.stringify(preferences) !== JSON.stringify(savedPreferences)
+  const [preferences, setPreferences] = useState(getReservationPreferences)
+  const [cancellationDraft, setCancellationDraft] = useState(
+    String(preferences.cancellationNoticeMinutes),
+  )
+  const [saveStatus, setSaveStatus] = useState(null)
+  const preferencesRef = useRef(preferences)
+  const savedPreferencesRef = useRef(preferences)
+  const resultTimerRef = useRef(null)
+  const dismissTimerRef = useRef(null)
 
-  const update = (field, value) => {
-    setPreferences((current) => ({ ...current, [field]: value }))
-    setFeedback(null)
-    setError(null)
+  const clearFeedbackTimers = () => {
+    window.clearTimeout(resultTimerRef.current)
+    window.clearTimeout(dismissTimerRef.current)
   }
 
-  const save = (event) => {
-    event.preventDefault()
-    const result = saveReservationPreferences(preferences)
+  useEffect(() => () => {
+    window.clearTimeout(resultTimerRef.current)
+    window.clearTimeout(dismissTimerRef.current)
+  }, [])
+
+  const dismissFeedbackAfter = (duration) => {
+    dismissTimerRef.current = window.setTimeout(() => setSaveStatus(null), duration)
+  }
+
+  const showError = (message) => {
+    clearFeedbackTimers()
+    setSaveStatus({ type: 'error', message })
+    dismissFeedbackAfter(ERROR_FEEDBACK_DURATION)
+  }
+
+  const persistPreferences = (nextPreferences) => {
+    clearFeedbackTimers()
+    preferencesRef.current = nextPreferences
+    setPreferences(nextPreferences)
+    setSaveStatus({ type: 'saving', message: 'Guardando…' })
+
+    const result = saveReservationPreferences(nextPreferences)
     if (!result.success) {
-      setError('Revisa los valores antes de guardar la configuración.')
+      const previousPreferences = savedPreferencesRef.current
+      preferencesRef.current = previousPreferences
+      setPreferences(previousPreferences)
+      setCancellationDraft(String(previousPreferences.cancellationNoticeMinutes))
+      showError('No se pudieron guardar los cambios.')
       return
     }
+
+    preferencesRef.current = result.preferences
+    savedPreferencesRef.current = result.preferences
     setPreferences(result.preferences)
-    setSavedPreferences(result.preferences)
-    setFeedback('Configuración de reservas actualizada.')
+    setCancellationDraft(String(result.preferences.cancellationNoticeMinutes))
+    resultTimerRef.current = window.setTimeout(() => {
+      setSaveStatus({ type: 'success', message: 'Cambios guardados' })
+      dismissFeedbackAfter(SAVED_FEEDBACK_DURATION)
+    }, SAVED_FEEDBACK_DELAY)
+  }
+
+  const updateAndSave = (field, value) => {
+    if (preferencesRef.current[field] === value) {
+      return
+    }
+
+    persistPreferences({ ...preferencesRef.current, [field]: value })
+  }
+
+  const updateCancellationDraft = (event) => {
+    clearFeedbackTimers()
+    setSaveStatus(null)
+    setCancellationDraft(event.target.value)
+  }
+
+  const saveCancellationNotice = (event) => {
+    const normalizedValue = event.currentTarget.value.trim()
+    const value = event.currentTarget.valueAsNumber
+    const isValid = event.currentTarget.validity.valid
+      && normalizedValue !== ''
+      && Number.isInteger(value)
+      && value >= 0
+      && value <= 10080
+
+    if (!isValid) {
+      setCancellationDraft(String(preferencesRef.current.cancellationNoticeMinutes))
+      showError('Ingresa un valor entre 0 y 10080 minutos, en intervalos de 5.')
+      return
+    }
+
+    if (value === preferencesRef.current.cancellationNoticeMinutes) {
+      setCancellationDraft(String(value))
+      return
+    }
+
+    persistPreferences({ ...preferencesRef.current, cancellationNoticeMinutes: value })
   }
 
   return (
@@ -48,7 +120,18 @@ function ReservationSettings({ onBack }) {
         </div>
       </header>
 
-      <form className="reservation-settings" onSubmit={save}>
+      <div className="reservation-settings__save-status" aria-live="polite" aria-atomic="true">
+        {saveStatus && (
+          <p data-type={saveStatus.type} role={saveStatus.type === 'error' ? 'alert' : 'status'}>
+            <span aria-hidden="true">
+              {saveStatus.type === 'success' ? '✓' : saveStatus.type === 'error' ? '!' : ''}
+            </span>
+            {saveStatus.message}
+          </p>
+        )}
+      </div>
+
+      <form className="reservation-settings" onSubmit={(event) => event.preventDefault()}>
         <section className="reservation-settings__section" aria-labelledby="confirmation-title">
           <header><span>01</span><div><h2 id="confirmation-title">Confirmación</h2>
             <p>Elige un modo global para todos tus servicios.</p></div></header>
@@ -57,13 +140,13 @@ function ReservationSettings({ onBack }) {
             <label className={preferences.confirmationMode === 'manual' ? 'is-selected' : ''}>
               <input type="radio" name="confirmation-mode" value="manual"
                 checked={preferences.confirmationMode === 'manual'}
-                onChange={() => update('confirmationMode', 'manual')} />
+                onChange={() => updateAndSave('confirmationMode', 'manual')} />
               <span><strong>Manual</strong><small>Cada solicitud necesita tu aprobación antes de confirmarse.</small></span>
             </label>
             <label className={preferences.confirmationMode === 'automatic' ? 'is-selected' : ''}>
               <input type="radio" name="confirmation-mode" value="automatic"
                 checked={preferences.confirmationMode === 'automatic'}
-                onChange={() => update('confirmationMode', 'automatic')} />
+                onChange={() => updateAndSave('confirmationMode', 'automatic')} />
               <span><strong>Automática</strong><small>Confirma si la hora sigue libre y el cliente no requiere aprobación manual.</small></span>
             </label>
           </fieldset>
@@ -78,7 +161,7 @@ function ReservationSettings({ onBack }) {
           <label className="reservation-field">
             <span>Tiempo para responder una solicitud</span>
             <select value={preferences.requestExpirationMinutes ?? 'none'}
-              onChange={(event) => update('requestExpirationMinutes',
+              onChange={(event) => updateAndSave('requestExpirationMinutes',
                 event.target.value === 'none' ? null : Number(event.target.value))}>
               {REQUEST_EXPIRATION_OPTIONS.map((minutes) => (
                 <option value={minutes ?? 'none'} key={minutes ?? 'none'}>
@@ -97,8 +180,15 @@ function ReservationSettings({ onBack }) {
             <span>Cancelación sin penalización hasta</span>
             <span className="reservation-number-field">
               <input type="number" min="0" max="10080" step="5" required
-                value={preferences.cancellationNoticeMinutes}
-                onChange={(event) => update('cancellationNoticeMinutes', Number(event.target.value))} />
+                value={cancellationDraft}
+                onChange={updateCancellationDraft}
+                onBlur={saveCancellationNotice}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    event.currentTarget.blur()
+                  }
+                }} />
               <small>minutos antes</small>
             </span>
             <small>Después del plazo se registra como cancelación tardía, nunca como inasistencia.</small>
@@ -112,7 +202,7 @@ function ReservationSettings({ onBack }) {
             <label className="reservation-field">
               <span>Anticipación mínima</span>
               <select value={preferences.minimumAdvanceMinutes}
-                onChange={(event) => update('minimumAdvanceMinutes', Number(event.target.value))}>
+                onChange={(event) => updateAndSave('minimumAdvanceMinutes', Number(event.target.value))}>
                 {MINIMUM_ADVANCE_OPTIONS.map((minutes) => (
                   <option value={minutes} key={minutes}>{advanceLabels[minutes]}</option>
                 ))}
@@ -121,7 +211,7 @@ function ReservationSettings({ onBack }) {
             <label className="reservation-field">
               <span>Días disponibles hacia adelante</span>
               <select value={preferences.bookingHorizonDays}
-                onChange={(event) => update('bookingHorizonDays', Number(event.target.value))}>
+                onChange={(event) => updateAndSave('bookingHorizonDays', Number(event.target.value))}>
                 {BOOKING_HORIZON_OPTIONS.map((days) => (
                   <option value={days} key={days}>{days} días</option>
                 ))}
@@ -131,17 +221,6 @@ function ReservationSettings({ onBack }) {
           </div>
         </section>
 
-        <footer className="reservation-settings__actions">
-          <div aria-live="polite">
-            {error && <p data-type="error">{error}</p>}
-            {feedback && <p data-type="success">{feedback}</p>}
-          </div>
-          <button className="button button--secondary" type="button" disabled={!hasChanges}
-            onClick={() => { setPreferences(savedPreferences); setError(null); setFeedback(null) }}>
-            Descartar cambios
-          </button>
-          <button className="button button--primary" type="submit" disabled={!hasChanges}>Guardar cambios</button>
-        </footer>
       </form>
     </div>
   )
