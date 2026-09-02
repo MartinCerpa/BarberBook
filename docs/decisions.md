@@ -142,3 +142,29 @@ Las mejoras importantes deben considerar feedback de profesionales reales.
 
 Motivo:
 BarberBook busca resolver problemas reales del trabajo diario del barbero, no solamente construir funcionalidades.
+
+---
+
+# Guardado de configuraciones
+
+Decisión:
+Las configuraciones operativas utilizan guardado automático inmediato.
+
+Aplica a:
+
+- Servicios.
+- Horarios de atención.
+- Reservas.
+- Preferencias frecuentes.
+
+Las configuraciones relacionadas con identidad profesional mantienen guardado manual.
+
+Aplica a:
+
+- Perfil profesional.
+- Información pública.
+
+Motivo:
+Reducir errores causados por olvidar guardar cambios y mantener una experiencia más rápida para tareas frecuentes.
+
+Los cambios automáticos deben pasar validaciones antes de persistir.
