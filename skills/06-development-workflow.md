@@ -101,3 +101,31 @@ Backend:
 - datos reales.
 
 No acoplar componentes directamente a bases de datos.
+
+---
+
+# Documentación del proyecto
+
+Antes de modificar docs:
+
+Actualizar documentación solamente cuando un cambio afecte:
+
+- Arquitectura.
+- Decisiones de producto.
+- Roadmap.
+- Procesos de desarrollo.
+
+No modificar documentación por cambios visuales menores o correcciones simples.
+
+Cuando una funcionalidad importante sea completada, sugerir actualizar el documento correspondiente.
+
+---
+
+## Registro de cambios importantes
+
+Cuando una implementación modifique una decisión existente del proyecto:
+
+1. Detener la implementación.
+2. Informar la decisión que será modificada.
+3. Proponer actualizar `docs/decisions.md`.
+4. Esperar confirmación antes de cambiar la documentación.
