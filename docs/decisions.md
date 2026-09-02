@@ -132,3 +132,13 @@ No integrar WhatsApp hasta validar el flujo principal.
 
 Motivo:
 Tiene costos asociados y depende de una versión más madura del producto.
+
+---
+
+# Validación con usuarios
+
+Decisión:
+Las mejoras importantes deben considerar feedback de profesionales reales.
+
+Motivo:
+BarberBook busca resolver problemas reales del trabajo diario del barbero, no solamente construir funcionalidades.
