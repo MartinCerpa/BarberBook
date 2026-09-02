@@ -23,11 +23,20 @@ const initialBooking = {
   },
 }
 
+const SELECTION_FEEDBACK_MS = 150
+
+const prefersReducedMotion = () =>
+  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
 function BookingFlow({ services, onExit }) {
   const [currentStep, setCurrentStep] = useState(0)
   const [booking, setBooking] = useState(initialBooking)
+  const [selectionFeedback, setSelectionFeedback] = useState(null)
   const submissionId = useRef(null)
   const submitting = useRef(false)
+  const advanceTimer = useRef(null)
+  const flowContentRef = useRef(null)
+  const previousStep = useRef(0)
   const [submissionError, setSubmissionError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submittedBooking, setSubmittedBooking] = useState(null)
@@ -38,8 +47,52 @@ function BookingFlow({ services, onExit }) {
   const selectedService = services.find(
     (service) => service.id === booking.serviceId,
   )
+  const selectedSlot = slots.find((slot) => slot.time === booking.time)
+
+  useEffect(() => () => window.clearTimeout(advanceTimer.current), [])
+
+  useEffect(() => {
+    if (previousStep.current === currentStep) return
+    previousStep.current = currentStep
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      const heading = flowContentRef.current?.querySelector('h1')
+      if (!heading) return
+      heading.setAttribute('tabindex', '-1')
+      heading.focus({ preventScroll: true })
+    })
+
+    return () => window.cancelAnimationFrame(focusFrame)
+  }, [currentStep])
+
+  const scrollToFlowStart = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    })
+  }
+
+  const cancelScheduledAdvance = () => {
+    window.clearTimeout(advanceTimer.current)
+    advanceTimer.current = null
+    setSelectionFeedback(null)
+  }
+
+  const advanceAfterFeedback = (nextStep, feedback) => {
+    window.clearTimeout(advanceTimer.current)
+    setSelectionFeedback(feedback)
+    const delay = prefersReducedMotion() ? 0 : SELECTION_FEEDBACK_MS
+
+    advanceTimer.current = window.setTimeout(() => {
+      setSelectionFeedback(null)
+      setCurrentStep(nextStep)
+      scrollToFlowStart()
+      advanceTimer.current = null
+    }, delay)
+  }
 
   const goToStep = (step) => {
+    cancelScheduledAdvance()
     const dateAvailable = dates.some((date) => date.id === booking.dateId && date.available)
     const timeAvailable = slots.some((slot) => slot.time === booking.time && slot.isBookable)
     // Revalida también si los horarios cambian en otra pestaña durante la reserva.
@@ -47,10 +100,14 @@ function BookingFlow({ services, onExit }) {
       ? 1
       : step >= 3 && !timeAvailable ? 2 : step
     setCurrentStep(nextStep)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    scrollToFlowStart()
   }
 
-  const selectService = (serviceId) => {
+  const handleServiceSelection = (serviceId) => {
+    if (selectionFeedback) return
+    const service = services.find((item) => item.id === serviceId)
+    if (!service) return
+
     setBooking((currentBooking) => {
       if (currentBooking.serviceId === serviceId) {
         return currentBooking
@@ -63,14 +120,29 @@ function BookingFlow({ services, onExit }) {
         time: '',
       }
     })
+    advanceAfterFeedback(1, `Seleccionaste ${service.name}`)
   }
 
-  const selectDate = (dateId) => {
+  const handleDateSelection = (dateId) => {
+    if (selectionFeedback) return
+    const date = dates.find((item) => item.id === dateId && item.available)
+    if (!date) return
+
     setBooking((currentBooking) => ({
       ...currentBooking,
       dateId,
       time: currentBooking.dateId === dateId ? currentBooking.time : '',
     }))
+    advanceAfterFeedback(2, 'Fecha seleccionada')
+  }
+
+  const handleTimeSelection = (time) => {
+    if (selectionFeedback) return
+    const slot = slots.find((item) => item.time === time && item.isBookable)
+    if (!slot) return
+
+    setBooking((currentBooking) => ({ ...currentBooking, time }))
+    advanceAfterFeedback(3, `Horario ${time} seleccionado`)
   }
 
   const submitBooking = async () => {
@@ -87,7 +159,7 @@ function BookingFlow({ services, onExit }) {
       }
       setSubmittedBooking(result.booking)
       setCurrentStep(5)
-      window.scrollTo({ top: 0, behavior: 'smooth' })
+      scrollToFlowStart()
     } catch {
       setSubmissionError('No pudimos enviar tu solicitud. Inténtalo de nuevo.')
     } finally {
@@ -99,7 +171,7 @@ function BookingFlow({ services, onExit }) {
   if (currentStep === 5) {
     return (
       <section className="booking-section" id="inicio">
-        <div className="container booking-shell">
+        <div className="container booking-shell" ref={flowContentRef}>
           <BookingSuccess
             booking={booking}
             submittedBooking={submittedBooking}
@@ -113,7 +185,7 @@ function BookingFlow({ services, onExit }) {
 
   return (
     <section className="booking-section" id="inicio">
-      <div className="container booking-shell">
+      <div className="container booking-shell" ref={flowContentRef}>
         <div className="booking-topbar">
           <button type="button" onClick={onExit}>
             <span aria-hidden="true">←</span>
@@ -129,9 +201,9 @@ function BookingFlow({ services, onExit }) {
             <ServiceSelector
               services={services}
               selectedId={booking.serviceId}
-              onSelect={selectService}
+              onSelect={handleServiceSelection}
               onBack={onExit}
-              onNext={() => goToStep(1)}
+              feedback={selectionFeedback}
             />
           )}
 
@@ -139,9 +211,9 @@ function BookingFlow({ services, onExit }) {
             <DateSelector
               dates={dates}
               selectedId={booking.dateId}
-              onSelect={selectDate}
+              onSelect={handleDateSelection}
               onBack={() => goToStep(0)}
-              onNext={() => goToStep(2)}
+              feedback={selectionFeedback}
             />
           )}
 
@@ -149,17 +221,16 @@ function BookingFlow({ services, onExit }) {
             <TimeSelector
               slots={slots.map((slot) => ({ ...slot, status: slot.bookingStatus }))}
               selectedTime={booking.time}
-              onSelect={(time) =>
-                setBooking((currentBooking) => ({ ...currentBooking, time }))
-              }
+              onSelect={handleTimeSelection}
               onBack={() => goToStep(1)}
-              onNext={() => goToStep(3)}
+              feedback={selectionFeedback}
             />
           )}
 
           {currentStep === 3 && (
             <CustomerForm
               customer={booking.customer}
+              hasPendingRequests={selectedSlot?.bookingStatus === 'pending'}
               onChange={(customer) =>
                 setBooking((currentBooking) => ({ ...currentBooking, customer }))
               }

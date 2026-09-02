@@ -6,11 +6,11 @@ const statusLabels = {
   unavailable: 'No disponible',
 }
 
-function TimeSelector({ slots, selectedTime, onSelect, onBack, onNext }) {
+function TimeSelector({ slots, selectedTime, onSelect, onBack, feedback }) {
   const selectedSlot = slots.find((slot) => slot.time === selectedTime)
 
   return (
-    <div className="booking-step booking-step--time">
+    <div className={`booking-step booking-step--time${feedback ? ' is-advancing' : ''}`}>
       <div className="booking-step__heading">
         <p className="eyebrow">Paso 3</p>
         <h1>Selecciona una hora</h1>
@@ -40,6 +40,7 @@ function TimeSelector({ slots, selectedTime, onSelect, onBack, onNext }) {
                 value={slot.time}
                 checked={isSelected}
                 onChange={() => onSelect(slot.time)}
+                onClick={isSelected ? () => onSelect(slot.time) : undefined}
                 disabled={!isSelectable}
               />
               <strong>{slot.time}</strong>
@@ -48,6 +49,12 @@ function TimeSelector({ slots, selectedTime, onSelect, onBack, onNext }) {
           )
         })}
       </fieldset>
+
+      {feedback && (
+        <p className="selection-feedback" role="status">
+          <span aria-hidden="true">✓</span>{feedback}
+        </p>
+      )}
 
       {selectedSlot?.isBookable && selectedSlot.status === 'pending' && (
         <div className="pending-warning" role="status">
@@ -62,17 +69,9 @@ function TimeSelector({ slots, selectedTime, onSelect, onBack, onNext }) {
         </div>
       )}
 
-      <div className="booking-actions">
+      <div className="booking-actions booking-actions--selection">
         <button className="button button--secondary" type="button" onClick={onBack}>
           Volver
-        </button>
-        <button
-          className="button button--primary"
-          type="button"
-          onClick={onNext}
-          disabled={!selectedSlot?.isBookable}
-        >
-          Continuar
         </button>
       </div>
     </div>

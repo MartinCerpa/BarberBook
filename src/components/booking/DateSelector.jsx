@@ -1,6 +1,6 @@
-function DateSelector({ dates, selectedId, onSelect, onBack, onNext }) {
+function DateSelector({ dates, selectedId, onSelect, onBack, feedback }) {
   return (
-    <div className="booking-step booking-step--date">
+    <div className={`booking-step booking-step--date${feedback ? ' is-advancing' : ''}`}>
       <div className="booking-step__heading">
         <p className="eyebrow">Paso 2</p>
         <h1>Elige una fecha</h1>
@@ -23,6 +23,7 @@ function DateSelector({ dates, selectedId, onSelect, onBack, onNext }) {
                 value={date.id}
                 checked={isSelected}
                 onChange={() => onSelect(date.id)}
+                onClick={isSelected ? () => onSelect(date.id) : undefined}
                 disabled={!date.available}
               />
               <span>{date.label}</span>
@@ -34,17 +35,15 @@ function DateSelector({ dates, selectedId, onSelect, onBack, onNext }) {
         })}
       </fieldset>
 
-      <div className="booking-actions">
+      {feedback && (
+        <p className="selection-feedback" role="status">
+          <span aria-hidden="true">✓</span>{feedback}
+        </p>
+      )}
+
+      <div className="booking-actions booking-actions--selection">
         <button className="button button--secondary" type="button" onClick={onBack}>
           Volver
-        </button>
-        <button
-          className="button button--primary"
-          type="button"
-          onClick={onNext}
-          disabled={!dates.some((date) => date.id === selectedId && date.available)}
-        >
-          Continuar
         </button>
       </div>
     </div>

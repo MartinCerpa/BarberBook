@@ -37,7 +37,7 @@ const validateCustomer = ({ name, phone }) => {
   return errors
 }
 
-function CustomerForm({ customer, onChange, onBack, onNext }) {
+function CustomerForm({ customer, hasPendingRequests = false, onChange, onBack, onNext }) {
   const [errors, setErrors] = useState({})
   const subscriberDigits = getSubscriberDigits(customer.phone)
   const isPhoneComplete = subscriberDigits.length === 8
@@ -74,6 +74,18 @@ function CustomerForm({ customer, onChange, onBack, onNext }) {
         <h1>Tus datos de contacto</h1>
         <p>Solo los usaremos para identificar esta solicitud.</p>
       </div>
+
+      {hasPendingRequests && (
+        <div className="pending-warning pending-warning--customer" role="status">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 8v5M12 17h.01M10.3 3.8 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.8a2 2 0 0 0-3.4 0Z" />
+          </svg>
+          <p>
+            <strong>Este horario tiene solicitudes pendientes.</strong>
+            El profesional confirmará tu solicitud.
+          </p>
+        </div>
+      )}
 
       <div className="form-field">
         <label htmlFor="customer-name">Nombre</label>
