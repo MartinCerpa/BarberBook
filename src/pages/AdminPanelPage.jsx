@@ -133,6 +133,7 @@ function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
       return (
         <SchedulePage
           requests={requests}
+          pendingRequestCount={pendingRequests}
           onViewRequests={(slot) => {
             setRequestFocus(slot)
             window.location.hash = '/panel/requests'

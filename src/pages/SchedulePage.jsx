@@ -20,7 +20,7 @@ const availabilityActions = {
   restore: restoreTimeSlot,
 }
 
-function SchedulePage({ requests, onViewRequests }) {
+function SchedulePage({ requests, pendingRequestCount = 0, onViewRequests }) {
   const [, refreshAvailability] = useState(0)
   useEffect(() => subscribeAvailability(() => refreshAvailability((value) => value + 1)), [])
   const upcomingDates = getBookingDates(undefined, requests)
@@ -45,9 +45,7 @@ function SchedulePage({ requests, onViewRequests }) {
     : []
   const confirmedItems = timelineItems.filter((item) => item.status === 'confirmed')
   const completedCount = timelineItems.filter((item) => item.status === 'completed').length
-  const totalAppointments = timelineItems.reduce((total, item) => total +
-    (['confirmed', 'completed', 'no_show'].includes(item.status) ? 1 : 0) + item.cancelledAppointments.length, 0)
-  const pendingAttentionCount = confirmedItems.length
+  const appointmentsToCloseCount = confirmedItems.length
   const nextAppointment = confirmedItems.find((item) => new Date(`${selectedDateId}T${item.time}:00`) >= new Date())
 
   const updateAvailability = (slot) => {
@@ -89,26 +87,53 @@ function SchedulePage({ requests, onViewRequests }) {
         </div>
       </header>
 
-      <section className="schedule-summary" aria-label="Resumen de agenda">
-        <div>
-          <strong>{totalAppointments}</strong>
-          <span>Total de atenciones</span>
+      <section className="schedule-overview" aria-label="Resumen de agenda">
+        <article className={`schedule-next-appointment${nextAppointment ? '' : ' is-empty'}`}>
+          <header>
+            <span>Próxima atención</span>
+            {nextAppointment && (
+              <span className="status-badge status-badge--confirmed">Confirmada</span>
+            )}
+          </header>
+          {nextAppointment ? (
+            <div className="schedule-next-appointment__details">
+              <time dateTime={`${selectedDateId}T${nextAppointment.time}:00`}>
+                {nextAppointment.time}
+              </time>
+              <div>
+                <strong>{nextAppointment.customerName}</strong>
+                <span>{nextAppointment.service}</span>
+              </div>
+            </div>
+          ) : (
+            <div className="schedule-next-appointment__empty">
+              <strong>Sin próxima atención</strong>
+              <span>No hay reservas confirmadas por comenzar en este día.</span>
+            </div>
+          )}
+        </article>
+
+        <div className="schedule-summary">
+          <div>
+            <strong>{appointmentsToCloseCount}</strong>
+            <span>Por cerrar</span>
+          </div>
+          <div>
+            <strong>{completedCount}</strong>
+            <span>Completadas</span>
+          </div>
+          <a
+            className="schedule-summary__link"
+            href="#/panel/requests"
+            aria-label={`Ver ${pendingRequestCount} solicitudes por revisar`}
+          >
+            <strong>{pendingRequestCount}</strong>
+            <span>Solicitudes por revisar</span>
+            <span className="schedule-summary__link-action" aria-hidden="true">
+              Ver →
+            </span>
+          </a>
         </div>
-        <div>
-          <strong>{completedCount}</strong>
-          <span>Completadas</span>
-        </div>
-        <a
-          className="schedule-summary__link"
-          href="#/panel/requests"
-          aria-label={`Ver ${pendingAttentionCount} solicitudes pendientes`}
-        >
-          <strong>{pendingAttentionCount}</strong>
-          <span>Pendientes</span>
-          <span className="schedule-summary__link-action" aria-hidden="true">
-            Ver →
-          </span>
-        </a>
       </section>
 
       <section
