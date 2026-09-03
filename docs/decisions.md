@@ -168,3 +168,67 @@ Motivo:
 Reducir errores causados por olvidar guardar cambios y mantener una experiencia más rápida para tareas frecuentes.
 
 Los cambios automáticos deben pasar validaciones antes de persistir.
+
+---
+
+## Agenda como centro operativo del profesional
+
+Fecha:
+Septiembre 2026
+
+Decisión:
+
+La Agenda profesional será diseñada como la herramienta principal de trabajo diario del barbero.
+
+Su objetivo no será únicamente mostrar reservas, sino acompañar el ciclo completo de atención del cliente.
+
+Flujo esperado:
+
+Reserva confirmada
+→ Cliente atendido
+→ Registro de servicio realizado
+→ Registro financiero
+→ Actualización de historial del cliente
+
+Principios:
+
+- Priorizar la próxima atención.
+- Reducir acciones necesarias durante la jornada.
+- Mostrar información relevante del cliente.
+- Preparar la integración futura con finanzas.
+- Mantener separación entre configuración de horarios y operación diaria.
+
+La Agenda debe evitar convertirse en una pantalla administrativa de configuración.
+
+---
+
+## Separación entre solicitudes y atenciones en Agenda
+
+Fecha:
+Septiembre 2026
+
+Decisión:
+
+BarberBook separará los conceptos de solicitudes pendientes y atenciones pendientes.
+
+Las solicitudes representan intentos de reserva que requieren una decisión del profesional.
+
+Las atenciones representan reservas confirmadas que todavía no han sido realizadas.
+
+La Agenda debe priorizar la gestión de atenciones confirmadas.
+
+Las Solicitudes deben manejar exclusivamente reservas pendientes de aprobación.
+
+Motivo:
+
+Evitar confusión en métricas, navegación y acciones disponibles para el profesional.
+
+Estados futuros:
+
+Solicitud:
+pending → confirmed / rejected / expired
+
+Atención:
+confirmed → in_progress → completed
+              ↘ cancelled
+              ↘ no_show
