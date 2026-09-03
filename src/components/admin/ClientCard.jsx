@@ -65,7 +65,6 @@ function ClientCard({ client, isExpanded, onToggle, onRestoreTrust }) {
           </span>
           <span className="client-card__identity">
             <strong>{client.name}</strong>
-            <small>{formatCustomerPhone(client.phone)}</small>
           </span>
           <span className={`client-card__status client-card__status--${status.id}`}>
             {status.label}
@@ -79,30 +78,21 @@ function ClientCard({ client, isExpanded, onToggle, onRestoreTrust }) {
           <span className="client-trust-label">Requiere aprobación manual</span>
         )}
 
-        <dl className="client-card__summary">
-          <div>
-            <dt>Última visita</dt>
-            <dd>{formatDate(client.lastVisit, shortDateFormatter)}</dd>
-          </div>
-          <div>
-            <dt>Atenciones</dt>
-            <dd>{client.completedAppointments}</dd>
-          </div>
-          <div>
-            <dt>Servicio habitual</dt>
-            <dd>{client.favoriteService}</dd>
-          </div>
-        </dl>
-
-        {client.nextAppointment && (
-          <span className="client-card__next">
-            <span>Próxima</span>
+        <span className="client-card__overview">
+          <span className={`client-card__activity${client.nextAppointment ? ' has-next' : ''}`}>
+            <span>{client.nextAppointment ? 'Próxima reserva' : 'Última visita'}</span>
             <strong>
-              {formatDate(client.nextAppointment.date, shortDateFormatter)} ·{' '}
-              {client.nextAppointment.time}
+              {client.nextAppointment
+                ? `${formatDate(client.nextAppointment.date, shortDateFormatter)} · ${client.nextAppointment.time}`
+                : formatDate(client.lastVisit, shortDateFormatter)}
             </strong>
+            {client.nextAppointment && <small>{client.nextAppointment.service}</small>}
           </span>
-        )}
+          <span className="client-card__visits">
+            <strong>{client.completedAppointments}</strong>
+            <span>{client.completedAppointments === 1 ? 'atención' : 'atenciones'}</span>
+          </span>
+        </span>
       </button>
 
       {isExpanded && (
@@ -118,43 +108,33 @@ function ClientCard({ client, isExpanded, onToggle, onRestoreTrust }) {
               <strong>{client.totalAppointments}</strong>
             </div>
             <div>
-              <span>Completadas</span>
-              <strong>{client.completedAppointments}</strong>
-            </div>
-            <div>
               <span>Gasto acumulado</span>
               <strong>{formatCurrency(client.totalSpent)}</strong>
             </div>
           </div>
 
           <dl className="client-details__list">
-            <div>
-              <dt>Última visita</dt>
-              <dd>{formatDate(client.lastVisit, longDateFormatter)}</dd>
-            </div>
+            {client.nextAppointment && (
+              <div>
+                <dt>Última visita</dt>
+                <dd>{formatDate(client.lastVisit, longDateFormatter)}</dd>
+              </div>
+            )}
             <div>
               <dt>Servicio habitual</dt>
               <dd>{client.favoriteService}</dd>
             </div>
-            {client.nextAppointment && (
-              <div>
-                <dt>Próxima reserva</dt>
-                <dd>
-                  {formatDate(client.nextAppointment.date, longDateFormatter)} ·{' '}
-                  {client.nextAppointment.time}
-                  <span>{client.nextAppointment.service}</span>
-                </dd>
-              </div>
-            )}
           </dl>
 
-          <div className="client-trust" data-status={client.trustStatus}>
-            <div><span>Inasistencias</span><strong>{client.noShows}</strong></div>
-            <p>{client.trustStatus === 'requires_manual_approval' ? 'Requiere aprobación manual' : 'Cliente normal'}</p>
-            {client.trustStatus === 'requires_manual_approval' && (
-              <button type="button" onClick={onRestoreTrust}>Marcar como cliente normal</button>
-            )}
-          </div>
+          {(client.noShows > 0 || client.trustStatus === 'requires_manual_approval') && (
+            <div className="client-trust" data-status={client.trustStatus}>
+              <div><span>Inasistencias</span><strong>{client.noShows}</strong></div>
+              <p>{client.trustStatus === 'requires_manual_approval' ? 'Requiere aprobación manual' : 'Cliente normal'}</p>
+              {client.trustStatus === 'requires_manual_approval' && (
+                <button type="button" onClick={onRestoreTrust}>Marcar como cliente normal</button>
+              )}
+            </div>
+          )}
 
           <section className="client-history" aria-label={`Historial de ${client.name}`}>
             <h3>Historial de atenciones</h3>

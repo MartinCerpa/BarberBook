@@ -232,3 +232,48 @@ Atención:
 confirmed → in_progress → completed
               ↘ cancelled
               ↘ no_show
+
+---
+
+## Clientes como centro de relación profesional
+
+Fecha:
+Septiembre 2026
+
+Decisión:
+
+El módulo Clientes será diseñado como una herramienta para gestionar la relación entre el profesional y sus clientes, no solamente como un listado de contactos.
+
+Principios:
+
+- Priorizar información útil para la atención diaria del barbero.
+- Mostrar como información principal la próxima reserva o última visita del cliente.
+- Mantener historial, frecuencia y gasto como datos derivados de reservas y futuras visitas realizadas.
+- No duplicar métricas editables dentro del cliente.
+- Utilizar archivado en lugar de eliminación física cuando existan relaciones históricas.
+- Mantener la integridad de reservas e historial aunque un cliente deje de aparecer en el listado principal.
+- Preparar la estructura para una futura integración con backend.
+
+VIP:
+
+- El estado VIP será una distinción manual asignada por el profesional.
+- No se calculará automáticamente mediante cantidad de visitas, gasto u otros indicadores.
+- El profesional podrá considerar frecuencia, servicios realizados, relación con el cliente u otros criterios propios.
+- La implementación del estado VIP queda preparada para una futura fase con backend.
+
+Ordenamiento:
+
+- El ordenamiento de clientes estará disponible dentro de la misma pantalla Clientes.
+- La preferencia inicial será "Actividad reciente".
+- Futuras opciones podrán incluir:
+  - Más frecuentes.
+  - Nuevos primero.
+  - Nombre A-Z.
+  - Nombre Z-A.
+
+Archivado:
+
+- Los clientes no serán eliminados físicamente cuando existan reservas o historial asociado.
+- El sistema utilizará archivado para conservar integridad histórica.
+- Un cliente archivado podrá ser recuperado posteriormente.
+- La implementación completa de archivado queda para una fase posterior con persistencia real.
