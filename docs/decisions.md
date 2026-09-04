@@ -157,7 +157,7 @@ Aplica a:
 - Reservas.
 - Preferencias frecuentes.
 
-Las configuraciones relacionadas con identidad profesional mantienen guardado manual.
+Las configuraciones relacionadas con identidad profesional o información pública mantienen guardado manual.
 
 Aplica a:
 
@@ -235,6 +235,28 @@ confirmed → in_progress → completed
 
 ---
 
+## Resolución de solicitudes desde Agenda
+
+Fecha:
+Septiembre 2026
+
+Decisión:
+
+La Agenda permitirá resolver solicitudes pendientes cuando exista suficiente información para tomar una decisión sin abandonar el contexto de trabajo.
+
+Motivo:
+
+Reducir pasos durante la jornada del profesional y mantener las acciones relacionadas con una atención cerca de su horario correspondiente.
+
+Principios:
+
+- Una solicitud individual podrá aceptarse desde la Agenda.
+- Cuando existan múltiples solicitudes para una misma hora, se mantendrá el acceso al detalle completo.
+- La Agenda no reemplaza el módulo Solicitudes, sino que permite acciones rápidas.
+- La información debe mantenerse sincronizada entre Agenda y Solicitudes.
+
+---
+
 ## Clientes como centro de relación profesional
 
 Fecha:
@@ -277,3 +299,56 @@ Archivado:
 - El sistema utilizará archivado para conservar integridad histórica.
 - Un cliente archivado podrá ser recuperado posteriormente.
 - La implementación completa de archivado queda para una fase posterior con persistencia real.
+
+---
+
+## Experiencia móvil como prioridad
+
+Fecha:
+Septiembre 2026
+
+Decisión:
+
+BarberBook será diseñado considerando el teléfono móvil como uno de los principales medios de uso del profesional.
+
+Motivo:
+
+La jornada del barbero ocurre principalmente mientras trabaja, por lo que las acciones importantes deben ser accesibles desde dispositivos móviles.
+
+Principios:
+
+- Las funciones principales deben funcionar correctamente en pantallas pequeñas.
+- Las decisiones de diseño deben validarse en dispositivos reales.
+- La interfaz debe adaptarse sin perder navegación ni funcionalidad.
+- La experiencia móvil no debe ser una versión reducida del escritorio.
+
+---
+
+## Identidad y relación del cliente
+
+Fecha:
+Septiembre 2026
+
+Decisión:
+
+La relación entre profesional y cliente será independiente del número telefónico.
+
+Motivo:
+
+Un número telefónico no siempre representa una única persona y BarberBook debe soportar distintos contextos profesionales.
+
+Principios:
+
+- El teléfono será un dato de contacto y no un identificador absoluto del cliente.
+- La identidad del cliente debe permitir futuras relaciones multiprofesionales.
+- El historial debe mantenerse asociado correctamente al profesional correspondiente.
+- La futura arquitectura backend deberá separar cliente, profesional y relación entre ambos.
+
+Esta decisión debe resolverse antes de implementar:
+
+- Archivado de clientes.
+- Fusión de clientes.
+- Eliminación de clientes.
+- Gestión avanzada de clientes en backend.
+
+---
