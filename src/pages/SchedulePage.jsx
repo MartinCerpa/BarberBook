@@ -20,7 +20,12 @@ const availabilityActions = {
   restore: restoreTimeSlot,
 }
 
-function SchedulePage({ requests, pendingRequestCount = 0, onViewRequests }) {
+function SchedulePage({
+  requests,
+  pendingRequestCount = 0,
+  onConfirmRequest,
+  onViewRequests,
+}) {
   const [, refreshAvailability] = useState(0)
   useEffect(() => subscribeAvailability(() => refreshAvailability((value) => value + 1)), [])
   const upcomingDates = getBookingDates(undefined, requests)
@@ -40,6 +45,15 @@ function SchedulePage({ requests, pendingRequestCount = 0, onViewRequests }) {
   const referenceDateId = bookingDates[0]?.id
   const dateLabel = selectedDateId ? formatRequestDateId(selectedDateId) : ''
   const dayRequests = getAvailabilityRequestsForDate(selectedDateId, requests)
+  const pendingRequestsByTime = dayRequests.reduce((requestsByTime, request) => {
+    if (request.status !== 'pending') {
+      return requestsByTime
+    }
+
+    const slotRequests = requestsByTime.get(request.time) ?? []
+    requestsByTime.set(request.time, [...slotRequests, request])
+    return requestsByTime
+  }, new Map())
   const timelineItems = selectedDateId
     ? getEffectiveTimeSlotsForDate(selectedDateId, dayRequests)
     : []
@@ -68,6 +82,24 @@ function SchedulePage({ requests, pendingRequestCount = 0, onViewRequests }) {
         restore: `${slot.time} vuelve a seguir el horario habitual.`,
       }[slot.action],
     })
+  }
+
+  const confirmPendingRequest = async (request) => {
+    const result = await onConfirmRequest(request.id)
+
+    if (!result?.success) {
+      setAvailabilityFeedback({
+        type: 'error',
+        message: result?.error ?? 'No pudimos confirmar esta solicitud.',
+      })
+      return false
+    }
+
+    setAvailabilityFeedback({
+      type: 'success',
+      message: `Solicitud de ${request.customerName} confirmada.`,
+    })
+    return true
   }
 
   return (
@@ -173,22 +205,34 @@ function SchedulePage({ requests, pendingRequestCount = 0, onViewRequests }) {
       </section>
 
       <section className="schedule-list" aria-label={`Agenda del ${dateLabel}`}>
-        {timelineItems.map((item) => (
-          <ScheduleItem
-            item={{ ...item, isNext: item.id === nextAppointment?.id }}
-            dateLabel={dateLabel}
-            onAvailabilityAction={() => updateAvailability(item)}
-            onOutcomeRecorded={(message) => setAvailabilityFeedback({ type: 'success', message })}
-            onViewRequests={() =>
-              onViewRequests({
-                dateId: selectedDateId,
-                time: item.time,
-                referenceDateId,
-              })
-            }
-            key={item.id}
-          />
-        ))}
+        {timelineItems.map((item) => {
+          const slotRequests = pendingRequestsByTime.get(item.time) ?? []
+          const pendingRequest = item.status === 'pending' && slotRequests.length === 1
+            ? slotRequests[0]
+            : null
+
+          return (
+            <ScheduleItem
+              item={{
+                ...item,
+                isNext: item.id === nextAppointment?.id,
+                pendingRequest,
+              }}
+              dateLabel={dateLabel}
+              onAvailabilityAction={() => updateAvailability(item)}
+              onConfirmRequest={() => confirmPendingRequest(pendingRequest)}
+              onOutcomeRecorded={(message) => setAvailabilityFeedback({ type: 'success', message })}
+              onViewRequests={() =>
+                onViewRequests({
+                  dateId: selectedDateId,
+                  time: item.time,
+                  referenceDateId,
+                })
+              }
+              key={item.id}
+            />
+          )
+        })}
       </section>
       <div className="schedule-availability__feedback" aria-live="polite">
         {availabilityFeedback ? (

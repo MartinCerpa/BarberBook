@@ -42,6 +42,12 @@ function RequestHistoryCard({ request, context }) {
           <dd>{request.time}</dd>
         </div>
       </dl>
+
+      {request.expirationReason === 'slot-taken' ? (
+        <p className="request-history-card__reason">
+          El horario fue asignado a otra solicitud.
+        </p>
+      ) : null}
     </article>
   )
 }

@@ -53,14 +53,18 @@ function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
   const updateRequestStatus = async (requestId, status) => {
     const currentRequest = requests.find((request) => request.id === requestId)
 
-    if (!currentRequest || currentRequest.status === status) {
-      return
+    if (!currentRequest) {
+      return { success: false, error: 'No encontramos esta solicitud.' }
+    }
+
+    if (currentRequest.status === status) {
+      return { success: true, changed: false, booking: currentRequest }
     }
 
     const result = await updateBookingStatus(requestId, status)
     if (!result.success) {
       setRequestFeedback({ message: result.error })
-      return
+      return result
     }
 
     window.clearTimeout(feedbackTimerRef.current)
@@ -82,6 +86,7 @@ function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
       },
       5500,
     )
+    return result
   }
 
   const undoRequestStatus = async () => {
@@ -134,6 +139,9 @@ function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
         <SchedulePage
           requests={requests}
           pendingRequestCount={pendingRequests}
+          onConfirmRequest={(requestId) =>
+            updateRequestStatus(requestId, 'confirmed')
+          }
           onViewRequests={(slot) => {
             setRequestFocus(slot)
             window.location.hash = '/panel/requests'

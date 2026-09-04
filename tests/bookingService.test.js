@@ -164,13 +164,50 @@ test('rechazada no crea atención, historial, gasto ni no_show', async () => {
   assert.equal(summary.noShows, 0)
 })
 
-test('aceptar una solicitud no transforma las demás del mismo horario', async () => {
+test('aceptar una solicitud confirma una y expira sus competidoras en una sola operación reversible', async () => {
   const first = await request('request-first')
   const second = await request('request-second', '15:00', '12345678')
-  acceptRequest(first.booking.id)
+  const third = await request('request-third', '15:00', '87654321')
+  const unrelated = await request('request-unrelated', '16:00', '11223344')
+  const writesBeforeAcceptance = storage.get(BOOKINGS_STORAGE_KEY)
+  let persistenceWrites = 0
+  const setItem = window.localStorage.setItem
+  window.localStorage.setItem = (key, value) => {
+    if (key === BOOKINGS_STORAGE_KEY && value !== writesBeforeAcceptance) persistenceWrites += 1
+    setItem(key, value)
+  }
+  const accepted = acceptRequest(first.booking.id, at('14:00'))
+  assert.equal(accepted.success, true)
+  assert.equal(persistenceWrites, 1)
+  assert.equal(accepted.expiredBookings.length, 2)
+  let records = getRequestsSnapshot(at('14:00'))
+  assert.equal(records.find((record) => record.id === first.booking.id).status, 'confirmed')
+  for (const competitor of [second, third]) {
+    const expired = records.find((record) => record.id === competitor.booking.id)
+    assert.equal(expired.status, 'expired')
+    assert.equal(expired.expirationReason, 'slot-taken')
+    assert.equal(expired.expiredAt, at('14:00').toISOString())
+    assert.deepEqual(getClientHistory(competitor.booking.customerId), [])
+  }
+  assert.equal(records.find((record) => record.id === unrelated.booking.id).status, 'pending')
   assert.equal(acceptRequest(second.booking.id).success, false)
-  assert.equal(getRequestsSnapshot().find((record) => record.id === second.booking.id).status, 'pending')
-  assert.equal(getClientHistory(second.booking.customerId).length, 0)
+  const undo = undoBookingChange(accepted.undoToken)
+  assert.equal(undo.success, true)
+  assert.equal(persistenceWrites, 2)
+  records = getRequestsSnapshot(at('14:00'))
+  assert.equal(records.find((record) => record.id === first.booking.id).status, 'pending')
+  assert.equal(records.find((record) => record.id === second.booking.id).status, 'pending')
+  assert.equal(records.find((record) => record.id === third.booking.id).status, 'pending')
+  assert.equal(records.find((record) => record.id === unrelated.booking.id).status, 'pending')
+  assert.equal(undoBookingChange(accepted.undoToken).success, false)
+  const beforeFailedAcceptance = storage.get(BOOKINGS_STORAGE_KEY)
+  window.localStorage.setItem = () => { throw new Error('Sin espacio') }
+  assert.equal(acceptRequest(second.booking.id, at('14:01')).success, false)
+  assert.equal(storage.get(BOOKINGS_STORAGE_KEY), beforeFailedAcceptance)
+  records = getRequestsSnapshot(at('14:01'))
+  assert.equal(records.find((record) => record.id === first.booking.id).status, 'pending')
+  assert.equal(records.find((record) => record.id === second.booking.id).status, 'pending')
+  assert.equal(records.find((record) => record.id === third.booking.id).status, 'pending')
 })
 
 test('resultados finales mutuamente excluyentes y no permiten editar una atención cerrada', async () => {
@@ -311,6 +348,18 @@ test('operación central deja una sola confirmada para dos envíos del mismo slo
   assert.equal(results.filter((result) => result.success).length, 1)
   assert.equal(readBookingState().records.filter((record) => record.dateId === dateId &&
     record.time === '15:00' && record.status === 'confirmed' && record.source === 'request').length, 1)
+})
+
+test('confirmación automática expira solicitudes pendientes que ya competían por el horario', async () => {
+  const pending = await request('request-pending-before-auto', '15:00', '81895314', at('14:00'))
+  configureReservations({ confirmationMode: 'automatic' })
+  const automatic = await request('request-automatic-winner', '15:00', '12345678', at('14:01'))
+  assert.equal(automatic.success, true)
+  assert.equal(automatic.booking.status, 'confirmed')
+  const expired = getRequestsSnapshot(at('14:01')).find((record) => record.id === pending.booking.id)
+  assert.equal(expired.status, 'expired')
+  assert.equal(expired.expirationReason, 'slot-taken')
+  assert.equal(expired.expiredAt, at('14:01').toISOString())
 })
 
 test('solicitud manual guarda createdAt y expiresAt configurado', async () => {

@@ -352,3 +352,51 @@ Esta decisión debe resolverse antes de implementar:
 - Gestión avanzada de clientes en backend.
 
 ---
+
+## Conflictos entre solicitudes del mismo horario
+
+Fecha:
+Septiembre 2026
+
+Decisión:
+
+Cuando varias solicitudes pendientes compitan por la misma fecha y hora, la primera solicitud aceptada ocupará el horario.
+
+Las solicitudes restantes serán cerradas automáticamente porque la disponibilidad dejó de existir.
+
+Estado resultante:
+
+pending → confirmed
+
+pending → expired
+
+Motivo:
+
+Evitar que múltiples clientes crean tener una oportunidad de reserva cuando el horario ya fue asignado.
+
+Principios:
+
+- La disponibilidad confirmada tiene prioridad sobre solicitudes pendientes.
+- La lógica debe ejecutarse en el servicio de reservas.
+- El cliente debe recibir un estado claro del motivo del cierre.
+- La regla debe mantenerse compatible con una futura API.
+
+## Finanzas como información derivada
+
+Fecha:
+Septiembre 2026
+
+Decisión:
+
+BarberBook mostrará información financiera inicial basada en reservas y servicios realizados.
+
+Los ingresos serán calculados como datos derivados y no almacenados manualmente dentro del cliente o reserva.
+
+Principios:
+
+- No llamar ganancias a ingresos sin considerar costos.
+- Mantener precios históricos de reservas.
+- Preparar una futura integración con pagos reales.
+- Separar reportes financieros de la gestión operativa de agenda.
+
+La primera versión incluirá ingresos estimados, cantidad de servicios y métricas básicas del negocio.

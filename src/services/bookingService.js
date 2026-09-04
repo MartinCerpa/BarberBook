@@ -17,6 +17,7 @@ export { subscribeBookings }
 export const outcomeLabels = { completed: 'Completada', cancelled: 'Cancelada', no_show: 'No asistió' }
 const failure = (error) => ({ success: false, error })
 const storageFailure = () => failure('No pudimos guardar el cambio en este navegador. Inténtalo de nuevo.')
+const SLOT_TAKEN_EXPIRATION_REASON = 'slot-taken'
 
 const expireRequestsInState = (state, now = new Date()) => {
   let changed = false
@@ -75,6 +76,51 @@ const commitRecord = (state, current, changes, undoable = false) => {
   }
 }
 
+const confirmRequestInState = (state, current, now, { origin = 'manual', undoable = false } = {}) => {
+  const confirmedAt = now.toISOString()
+  const competingRequests = state.records.filter((record) => record.id !== current.id &&
+    record.source === 'request' && record.status === 'pending' &&
+    record.dateId === current.dateId && record.time === current.time &&
+    record.professionalId === current.professionalId)
+  const previousRecords = [current, ...competingRequests]
+  const nextRecords = new Map()
+  const booking = {
+    ...current,
+    status: 'confirmed',
+    appointmentId: `appointment-${current.id}`,
+    confirmedAt,
+    confirmationOrigin: origin,
+    revision: current.revision + 1,
+  }
+  nextRecords.set(booking.id, booking)
+  competingRequests.forEach((record) => {
+    nextRecords.set(record.id, {
+      ...record,
+      status: 'expired',
+      expiredAt: confirmedAt,
+      expirationReason: SLOT_TAKEN_EXPIRATION_REASON,
+      revision: record.revision + 1,
+    })
+  })
+  state.records = state.records.map((record) => nextRecords.get(record.id) ?? record)
+  if (!saveBookingState(state).success) return storageFailure()
+  const expiredBookings = competingRequests.map((record) => nextRecords.get(record.id))
+  return {
+    success: true,
+    changed: true,
+    booking,
+    expiredBookings,
+    undoToken: undoable ? {
+      recordId: current.id,
+      records: previousRecords.map((previous) => ({
+        recordId: previous.id,
+        revision: nextRecords.get(previous.id).revision,
+        previous,
+      })),
+    } : null,
+  }
+}
+
 export const createBooking = async (bookingData, now = new Date()) => {
   const phone = normalizeCustomerPhone(bookingData.customer?.phone)
   const name = bookingData.customer?.name?.trim()
@@ -107,18 +153,21 @@ export const createBooking = async (bookingData, now = new Date()) => {
     customer.trustStatus !== 'requires_manual_approval'
   const createdAt = now.toISOString()
   const booking = {
-    id, appointmentId: automaticallyConfirmed ? `appointment-${id}` : null,
+    id, appointmentId: null,
     customerId: customer.id, customerName: name, phone,
     serviceId: service.id, service: service.name, price: service.price,
     duration: service.duration, suggestedDuration: service.duration,
     dateId: bookingData.dateId, time: bookingData.time,
-    status: automaticallyConfirmed ? 'confirmed' : 'pending', source: 'request', createdAt,
+    status: 'pending', source: 'request', createdAt,
     expiresAt: automaticallyConfirmed ? null : getRequestExpiresAt(createdAt, preferences),
     confirmationOrigin: automaticallyConfirmed ? 'automatic' : 'manual',
-    confirmedAt: automaticallyConfirmed ? createdAt : undefined,
+    confirmedAt: undefined,
     revision: 0,
   }
   state.records.push(booking)
+  if (automaticallyConfirmed) {
+    return confirmRequestInState(state, booking, now, { origin: 'automatic' })
+  }
   return saveBookingState(state).success ? { success: true, changed: true, booking } : storageFailure()
 }
 
@@ -135,10 +184,7 @@ export const acceptRequest = (bookingId, now = new Date()) => {
   if (current.status !== 'pending') return failure('Solo se puede confirmar una solicitud pendiente.')
   if (!Number.isInteger(current.price) || current.price < 0) return failure('La solicitud no tiene un precio de servicio válido.')
   if (!isSlotBookable(current.dateId, current.time, state)) return failure('Este horario ya no se puede confirmar.')
-  return commitRecord(state, current, {
-    status: 'confirmed', appointmentId: `appointment-${current.id}`,
-    confirmedAt: now.toISOString(), confirmationOrigin: 'manual',
-  }, true)
+  return confirmRequestInState(state, current, now, { origin: 'manual', undoable: true })
 }
 
 export const getAppointmentOutcomeOptions = (appointment, now = new Date()) => {
@@ -208,18 +254,35 @@ export const updateBookingStatus = (bookingId, status) => {
 
 export const undoBookingChange = (token) => {
   const state = readBookingState()
-  const current = state.records.find((record) => record.id === token?.recordId)
-  if (!current || current.revision !== token.revision || token.previous?.id !== current.id ||
-    ['completed', 'no_show'].includes(current.status)) return failure('El registro cambió; ya no se puede deshacer esta acción.')
-  if (token.previous.status === 'confirmed' && !isSlotBookable(current.dateId, token.previous.time, state)) {
+  const entries = Array.isArray(token?.records) && token.records.length > 0
+    ? token.records
+    : token?.recordId ? [token] : []
+  const uniqueRecordIds = new Set(entries.map((entry) => entry.recordId))
+  const currentRecords = entries.map((entry) => state.records.find((record) => record.id === entry.recordId))
+  const invalidToken = entries.length === 0 || uniqueRecordIds.size !== entries.length ||
+    entries.some((entry, index) => {
+      const current = currentRecords[index]
+      return !current || current.revision !== entry.revision || entry.previous?.id !== current.id ||
+        ['completed', 'no_show'].includes(current.status)
+    })
+  if (invalidToken) return failure('El registro cambió; ya no se puede deshacer esta acción.')
+  const unavailableRestoration = entries.some((entry, index) => entry.previous.status === 'confirmed' &&
+    !isSlotBookable(currentRecords[index].dateId, entry.previous.time, state))
+  if (unavailableRestoration) {
     return failure('No se puede restaurar la reserva porque el horario ya no está disponible.')
   }
-  return commitRecord(state, current, {
-    ...token.previous,
-    outcomeRecordedAt: token.previous.outcomeRecordedAt,
-    isLateCancellation: token.previous.isLateCancellation,
-    cancellationNoticeMinutes: token.previous.cancellationNoticeMinutes,
-  })
+  const restoredRecords = new Map(entries.map((entry, index) => [entry.recordId, {
+    ...entry.previous,
+    revision: currentRecords[index].revision + 1,
+  }]))
+  state.records = state.records.map((record) => restoredRecords.get(record.id) ?? record)
+  if (!saveBookingState(state).success) return storageFailure()
+  return {
+    success: true,
+    changed: true,
+    booking: restoredRecords.get(token.recordId) ?? restoredRecords.values().next().value,
+    undoToken: null,
+  }
 }
 
 export const updateBookingDetails = (bookingId, changes) => {

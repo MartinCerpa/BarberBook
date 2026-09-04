@@ -19,10 +19,24 @@ const actionLabels = {
   restore: 'Restaurar horario',
 }
 
-function ScheduleItem({ item, dateLabel, onAvailabilityAction, onViewRequests, onOutcomeRecorded }) {
+function ScheduleItem({
+  item,
+  dateLabel,
+  onAvailabilityAction,
+  onConfirmRequest,
+  onViewRequests,
+  onOutcomeRecorded,
+}) {
   const actionLabel = actionLabels[item.action]
   const [isManaging, setIsManaging] = useState(false)
+  const [isConfirming, setIsConfirming] = useState(false)
   const isAppointment = ['confirmed', 'completed', 'no_show'].includes(item.status)
+
+  const confirmRequest = async () => {
+    setIsConfirming(true)
+    await onConfirmRequest()
+    setIsConfirming(false)
+  }
 
   return (
     <article
@@ -39,12 +53,18 @@ function ScheduleItem({ item, dateLabel, onAvailabilityAction, onViewRequests, o
             </>
           ) : (
             <>
-              <strong>{statusLabels[item.status]}</strong>
+              <strong>
+                {item.status === 'pending' && item.pendingRequest
+                  ? item.pendingRequest.customerName
+                  : statusLabels[item.status]}
+              </strong>
               <span>
                 {item.status === 'available'
                   ? item.isEnabledException ? 'Habilitada solo para esta fecha' : 'Espacio libre para nuevas solicitudes'
                   : item.status === 'pending'
-                    ? `${item.pendingCount} por revisar`
+                    ? item.pendingRequest
+                      ? `${item.pendingRequest.service} · Solicitud pendiente`
+                      : `${item.pendingCount} por revisar`
                     : item.status === 'blocked'
                       ? 'Horario bloqueado por el profesional'
                       : 'Horario no ofrecido para reservas'}
@@ -73,6 +93,16 @@ function ScheduleItem({ item, dateLabel, onAvailabilityAction, onViewRequests, o
             aria-label={`${actionLabel} ${item.time} del ${dateLabel}`}
           >
             {actionLabel}
+          </button>
+        ) : item.status === 'pending' && item.pendingRequest ? (
+          <button
+            className="schedule-item__action schedule-item__action--confirm"
+            type="button"
+            onClick={confirmRequest}
+            disabled={isConfirming}
+            aria-label={`Confirmar solicitud de ${item.pendingRequest.customerName} a las ${item.time}`}
+          >
+            {isConfirming ? 'Confirmando…' : 'Confirmar'}
           </button>
         ) : item.status === 'pending' ? (
           <button

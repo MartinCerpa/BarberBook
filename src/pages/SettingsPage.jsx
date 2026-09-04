@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getProfessional } from '../services/professionalService.js'
 import {
   clearProfilePreferences,
@@ -141,6 +141,9 @@ function ProfileSettingsView({ onBack }) {
   const [errors, setErrors] = useState({})
   const [feedback, setFeedback] = useState(null)
   const [isConfirmingRestore, setIsConfirmingRestore] = useState(false)
+  const [isConfirmingNavigation, setIsConfirmingNavigation] = useState(false)
+  const pendingNavigationRef = useRef(null)
+  const allowNextNavigationRef = useRef(false)
 
   useEffect(() => {
     let isMounted = true
@@ -177,6 +180,95 @@ function ProfileSettingsView({ onBack }) {
       ),
     [formData, savedData],
   )
+
+  const saveProfileChanges = useCallback(() => {
+    if (!formData.name.trim()) {
+      setErrors({ name: 'Ingresa el nombre que verán tus clientes.' })
+      return false
+    }
+
+    const result = saveProfilePreferences(formData)
+
+    if (!result.success) {
+      setFeedback({
+        type: 'error',
+        message: 'No pudimos guardar los cambios en este navegador.',
+      })
+      return false
+    }
+
+    setFormData(result.preferences)
+    setSavedData(result.preferences)
+    setErrors({})
+    setFeedback({ type: 'success', message: 'Perfil actualizado.' })
+    return true
+  }, [formData])
+
+  const requestNavigation = useCallback((navigate) => {
+    if (!hasUnsavedChanges) {
+      navigate()
+      return
+    }
+
+    pendingNavigationRef.current = navigate
+    setIsConfirmingRestore(false)
+    setIsConfirmingNavigation(true)
+  }, [hasUnsavedChanges])
+
+  const continueEditing = useCallback(() => {
+    pendingNavigationRef.current = null
+    setIsConfirmingNavigation(false)
+  }, [])
+
+  const completePendingNavigation = useCallback(() => {
+    const navigate = pendingNavigationRef.current
+    pendingNavigationRef.current = null
+    setIsConfirmingNavigation(false)
+    navigate?.()
+  }, [])
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) {
+      return undefined
+    }
+
+    const protectReload = (event) => {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+
+    window.addEventListener('beforeunload', protectReload)
+    return () => window.removeEventListener('beforeunload', protectReload)
+  }, [hasUnsavedChanges])
+
+  useEffect(() => {
+    const protectInternalNavigation = (event) => {
+      const link = event.target.closest?.('a[href^="#"]')
+
+      if (!link) {
+        return
+      }
+
+      if (allowNextNavigationRef.current) {
+        allowNextNavigationRef.current = false
+        return
+      }
+
+      if (!hasUnsavedChanges) {
+        return
+      }
+
+      event.preventDefault()
+      event.stopPropagation()
+      requestNavigation(() => {
+        allowNextNavigationRef.current = true
+        link.click()
+      })
+    }
+
+    document.addEventListener('click', protectInternalNavigation, true)
+    return () => document.removeEventListener('click', protectInternalNavigation, true)
+  }, [hasUnsavedChanges, requestNavigation])
 
   const updateField = (event) => {
     const { name, value } = event.target
@@ -232,26 +324,44 @@ function ProfileSettingsView({ onBack }) {
 
   const handleSubmit = (event) => {
     event.preventDefault()
+    saveProfileChanges()
+  }
 
-    if (!formData.name.trim()) {
-      setErrors({ name: 'Ingresa el nombre que verán tus clientes.' })
-      return
+  const saveAndNavigate = () => {
+    if (saveProfileChanges()) {
+      completePendingNavigation()
     }
+  }
 
-    const result = saveProfilePreferences(formData)
-
-    if (!result.success) {
-      setFeedback({
-        type: 'error',
-        message: 'No pudimos guardar los cambios en este navegador.',
-      })
-      return
-    }
-
-    setFormData(result.preferences)
-    setSavedData(result.preferences)
+  const discardAndNavigate = () => {
+    setFormData(savedData)
+    setSpecialtyDraft('')
     setErrors({})
-    setFeedback({ type: 'success', message: 'Perfil actualizado.' })
+    setFeedback(null)
+    completePendingNavigation()
+  }
+
+  const handleNavigationDialogKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      continueEditing()
+      return
+    }
+
+    if (event.key !== 'Tab') {
+      return
+    }
+
+    const controls = [...event.currentTarget.querySelectorAll('button:not(:disabled)')]
+    const firstControl = controls[0]
+    const lastControl = controls.at(-1)
+
+    if (event.shiftKey && document.activeElement === firstControl) {
+      event.preventDefault()
+      lastControl.focus()
+    } else if (!event.shiftKey && document.activeElement === lastControl) {
+      event.preventDefault()
+      firstControl.focus()
+    }
   }
 
   const restoreOriginalProfile = async () => {
@@ -280,7 +390,7 @@ function ProfileSettingsView({ onBack }) {
   if (!formData) {
     return (
       <div className="admin-page settings-page settings-subview">
-        <SettingsBackButton onBack={onBack} />
+        <SettingsBackButton onBack={() => requestNavigation(onBack)} />
         <p className="profile-settings__loading">Cargando perfil…</p>
       </div>
     )
@@ -288,7 +398,7 @@ function ProfileSettingsView({ onBack }) {
 
   return (
     <div className="admin-page settings-page settings-subview">
-      <SettingsBackButton onBack={onBack} />
+      <SettingsBackButton onBack={() => requestNavigation(onBack)} />
 
       <header className="admin-page__heading">
         <div>
@@ -523,6 +633,49 @@ function ProfileSettingsView({ onBack }) {
           </button>
         </footer>
       </form>
+
+      {isConfirmingNavigation ? (
+        <div className="unsaved-changes-dialog" role="presentation">
+          <section
+            className="unsaved-changes-dialog__panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="unsaved-changes-title"
+            aria-describedby="unsaved-changes-description"
+            onKeyDown={handleNavigationDialogKeyDown}
+          >
+            <p className="eyebrow">Cambios pendientes</p>
+            <h2 id="unsaved-changes-title">¿Qué quieres hacer?</h2>
+            <p id="unsaved-changes-description">
+              Tu perfil tiene cambios que todavía no se han guardado.
+            </p>
+            <div className="unsaved-changes-dialog__actions">
+              <button
+                className="button button--primary"
+                type="button"
+                onClick={saveAndNavigate}
+              >
+                Guardar cambios
+              </button>
+              <button
+                className="unsaved-changes-dialog__discard"
+                type="button"
+                onClick={discardAndNavigate}
+              >
+                Descartar cambios
+              </button>
+              <button
+                className="button button--secondary"
+                type="button"
+                onClick={continueEditing}
+                autoFocus
+              >
+                Seguir editando
+              </button>
+            </div>
+          </section>
+        </div>
+      ) : null}
     </div>
   )
 }
