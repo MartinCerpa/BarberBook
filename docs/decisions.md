@@ -400,3 +400,74 @@ Principios:
 - Separar reportes financieros de la gestión operativa de agenda.
 
 La primera versión incluirá ingresos estimados, cantidad de servicios y métricas básicas del negocio.
+
+---
+
+## Finanzas como información derivada
+
+Fecha:
+Septiembre 2026
+
+Decisión:
+
+BarberBook incorporará una primera vista de finanzas para la beta, basada únicamente en información derivada de reservas y atenciones completadas.
+
+Los datos financieros no se almacenarán como totales manuales ni como campos editables independientes.
+
+### Reconocimiento de ingresos
+
+Una reserva genera ingreso solamente cuando:
+
+1. Fue confirmada por el profesional.
+2. Posteriormente fue registrada con resultado `completed`.
+
+Por lo tanto:
+
+- `completed` → sí genera ingreso.
+- `confirmed` → no genera ingreso todavía.
+- `pending` → no genera ingreso.
+- `cancelled` → no genera ingreso.
+- `no_show` → no genera ingreso.
+- `expired` → no genera ingreso.
+- `rejected` → no genera ingreso.
+
+La métrica principal será:
+
+**Ingresos realizados**
+
+No utilizar los conceptos de ganancia, utilidad o ingreso neto mientras no exista registro de gastos.
+
+### Períodos iniciales
+
+La primera versión de Finanzas permitirá consultar:
+
+- Hoy.
+- Esta semana.
+- Este mes.
+
+### Métricas iniciales
+
+La beta podrá mostrar:
+
+- Ingresos realizados.
+- Servicios completados.
+- Reservas confirmadas.
+- Ticket promedio.
+- Servicio más realizado.
+- Clientes atendidos.
+
+### Principios
+
+- Las métricas deben derivarse de la misma fuente de verdad utilizada por reservas, agenda e historial.
+- No duplicar totales financieros dentro de `Customer` o `Booking`.
+- Mantener el precio histórico asociado a la atención realizada.
+- Preparar la arquitectura para una futura integración con pagos y abonos.
+- Separar claramente ingresos de ganancias.
+- No implementar gastos ni contabilidad completa durante esta fase.
+- La tarjeta financiera del Dashboard deberá permitir acceder a una vista de Finanzas más detallada.
+
+Objetivo:
+
+Entregar al profesional una primera herramienta para entender cuánto está generando realmente mediante BarberBook, sin convertir todavía la aplicación en un sistema contable completo.
+
+---
