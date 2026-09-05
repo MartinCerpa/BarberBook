@@ -7,6 +7,7 @@ const adminSections = new Set([
   'requests',
   'schedule',
   'clients',
+  'finances',
   'services',
   'settings',
 ])

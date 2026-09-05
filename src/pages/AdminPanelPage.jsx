@@ -1,18 +1,25 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { requestContext } from '../data/requests'
 import {
-  getRequestsSnapshot, subscribeBookings, undoBookingChange,
+  getAppointments, getRequestsSnapshot, subscribeBookings, undoBookingChange,
   updateBookingDetails, updateBookingStatus,
 } from '../services/bookingService'
+import {
+  getCurrentPendingRequests,
+  getDailyOperationsSummary,
+  getNextConfirmedAppointment,
+} from '../services/bookingInsightsService'
+import { calculateFinancialSummary } from '../services/financialService'
 import AdminLayout from '../layouts/AdminLayout'
 import AdminDashboardPage from './AdminDashboardPage'
 import AdminPlaceholderPage from './AdminPlaceholderPage'
 import ClientsPage from './ClientsPage'
+import FinancesPage from './FinancesPage'
 import RequestsPage from './RequestsPage'
 import SchedulePage from './SchedulePage'
 import ServicesPage from './ServicesPage'
 import SettingsPage from './SettingsPage'
-import { isHistoricalRequest } from '../utils/requestUtils'
+import { getLocalDateId } from '../utils/requestUtils'
 
 const requestStatusMessages = {
   confirmed: 'Reserva confirmada correctamente.',
@@ -23,20 +30,65 @@ const requestStatusMessages = {
 
 function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
   const [requests, setRequests] = useState(getRequestsSnapshot)
+  const [, refreshDashboardClock] = useState(0)
   const [requestFeedback, setRequestFeedback] = useState(null)
   const [requestFocus, setRequestFocus] = useState(null)
   const feedbackTimerRef = useRef(null)
   const feedbackRemovalTimerRef = useRef(null)
   useEffect(() => subscribeBookings(() => setRequests(getRequestsSnapshot())), [])
   const pendingRequests = useMemo(
-    () =>
-      requests.filter(
-        (request) =>
-          request.status === 'pending' &&
-          !isHistoricalRequest(request, requestContext),
-      ).length,
+    () => getCurrentPendingRequests(requests, requestContext).length,
     [requests],
   )
+  const dashboardNow = new Date()
+  const todayDateId = getLocalDateId(dashboardNow)
+  const appointments = getAppointments()
+  const dashboardSummary = {
+    pendingRequests,
+    todayDateId,
+    nextAppointment: getNextConfirmedAppointment(appointments, dashboardNow),
+    dailyOperations: getDailyOperationsSummary(appointments, todayDateId, dashboardNow),
+    financial: calculateFinancialSummary(appointments, 'today', dashboardNow),
+  }
+  const nextAppointmentStartsAt = dashboardSummary.nextAppointment
+    ? new Date(
+      `${dashboardSummary.nextAppointment.dateId}T${dashboardSummary.nextAppointment.time}:00`,
+    ).getTime()
+    : Number.POSITIVE_INFINITY
+  const nextLocalDayStartsAt = new Date(
+    dashboardNow.getFullYear(),
+    dashboardNow.getMonth(),
+    dashboardNow.getDate() + 1,
+  ).getTime()
+  const dashboardRefreshAt = Math.min(
+    Number.isFinite(nextAppointmentStartsAt)
+      ? nextAppointmentStartsAt + 1000
+      : Number.POSITIVE_INFINITY,
+    nextLocalDayStartsAt,
+  )
+
+  useEffect(() => {
+    const maximumTimeout = 2147483647
+    const refreshDelay = Math.min(
+      Math.max(dashboardRefreshAt - Date.now(), 0),
+      maximumTimeout,
+    )
+    const refreshTimer = window.setTimeout(
+      () => refreshDashboardClock((currentValue) => currentValue + 1),
+      refreshDelay,
+    )
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === 'visible') {
+        refreshDashboardClock((currentValue) => currentValue + 1)
+      }
+    }
+
+    document.addEventListener('visibilitychange', refreshWhenVisible)
+    return () => {
+      window.clearTimeout(refreshTimer)
+      document.removeEventListener('visibilitychange', refreshWhenVisible)
+    }
+  }, [dashboardRefreshAt])
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' })
@@ -116,7 +168,7 @@ function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
 
   const renderSection = () => {
     if (activeSection === 'dashboard') {
-      return <AdminDashboardPage pendingRequests={pendingRequests} />
+      return <AdminDashboardPage dashboardSummary={dashboardSummary} />
     }
 
     if (activeSection === 'requests') {
@@ -152,6 +204,10 @@ function AdminPanelPage({ activeSection, navigationKey, onNavigate }) {
 
     if (activeSection === 'clients') {
       return <ClientsPage />
+    }
+
+    if (activeSection === 'finances') {
+      return <FinancesPage />
     }
 
     if (activeSection === 'services') {

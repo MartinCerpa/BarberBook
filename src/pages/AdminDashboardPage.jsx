@@ -1,8 +1,38 @@
 import DashboardCard from '../components/admin/DashboardCard'
-import { dashboard } from '../data/dashboard'
 import { formatCurrency } from '../utils/formatters'
 
-function AdminDashboardPage({ pendingRequests }) {
+const shortDateFormatter = new Intl.DateTimeFormat('es-CL', {
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+})
+
+const getNextAppointmentDetail = (appointment, todayDateId) => {
+  if (!appointment) {
+    return 'Sin reservas confirmadas próximas'
+  }
+
+  const dateLabel = appointment.dateId === todayDateId
+    ? 'Hoy'
+    : shortDateFormatter
+      .format(new Date(`${appointment.dateId}T12:00:00`))
+      .replace(/^./, (letter) => letter.toLocaleUpperCase('es-CL'))
+
+  return `${dateLabel} · ${appointment.customerName} · ${appointment.service}`
+}
+
+const formatAttentionCount = (value) =>
+  `${value} ${value === 1 ? 'atención' : 'atenciones'}`
+
+function AdminDashboardPage({ dashboardSummary }) {
+  const {
+    dailyOperations,
+    financial,
+    nextAppointment,
+    pendingRequests,
+    todayDateId,
+  } = dashboardSummary
+
   return (
     <div className="admin-page dashboard-page">
       <header className="admin-page__heading">
@@ -16,36 +46,41 @@ function AdminDashboardPage({ pendingRequests }) {
         <DashboardCard
           label="Solicitudes"
           value={pendingRequests}
-          detail="solicitudes por revisar"
+          detail={pendingRequests === 1 ? 'solicitud por revisar' : 'solicitudes por revisar'}
           tone="accent"
           href="#/panel/requests"
         />
         <DashboardCard
           label="Próxima atención"
-          value={dashboard.nextClient.time}
-          detail={`${dashboard.nextClient.name} · ${dashboard.nextClient.service}`}
+          value={nextAppointment?.time ?? '—'}
+          detail={getNextAppointmentDetail(nextAppointment, todayDateId)}
           tone="dark"
           href="#/panel/schedule"
         />
         <DashboardCard
           label="Clientes del día"
-          value={dashboard.clientsToday}
-          detail="clientes agendados"
+          value={dailyOperations.clientsToday}
+          detail={dailyOperations.clientsToday === 1
+            ? 'cliente con atención hoy'
+            : 'clientes con atención hoy'}
         />
         <DashboardCard
-          label="Ingresos estimados"
-          value={formatCurrency(dashboard.estimatedIncome)}
-          detail="Según reservas confirmadas"
+          label="Ingresos realizados"
+          value={formatCurrency(financial.realizedIncome)}
+          detail={financial.completedServices === 1
+            ? '1 servicio completado hoy'
+            : `${financial.completedServices} servicios completados hoy`}
+          href="#/panel/finances"
         />
       </section>
 
       <section className="dashboard-focus">
         <div>
           <p className="eyebrow">Agenda de hoy</p>
-          <h2>{dashboard.reservationsToday} atenciones</h2>
+          <h2>{formatAttentionCount(dailyOperations.totalAppointments)}</h2>
           <p>
-            {dashboard.completedAppointments} completadas ·{' '}
-            {dashboard.reservationsToday - dashboard.completedAppointments} por atender
+            {dailyOperations.completedAppointments} completadas ·{' '}
+            {dailyOperations.confirmedAppointments} por cerrar
           </p>
         </div>
         <div className="dashboard-focus__aside">

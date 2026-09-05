@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import ScheduleItem from '../components/admin/ScheduleItem'
 import { getUnfinishedAppointmentDates } from '../services/bookingService'
+import { getDailyOperationsSummary } from '../services/bookingInsightsService.js'
 import {
   blockTimeSlot,
   enableTimeSlot,
@@ -57,10 +58,11 @@ function SchedulePage({
   const timelineItems = selectedDateId
     ? getEffectiveTimeSlotsForDate(selectedDateId, dayRequests)
     : []
-  const confirmedItems = timelineItems.filter((item) => item.status === 'confirmed')
-  const completedCount = timelineItems.filter((item) => item.status === 'completed').length
-  const appointmentsToCloseCount = confirmedItems.length
-  const nextAppointment = confirmedItems.find((item) => new Date(`${selectedDateId}T${item.time}:00`) >= new Date())
+  const {
+    confirmedAppointments: appointmentsToCloseCount,
+    completedAppointments: completedCount,
+    nextAppointment,
+  } = getDailyOperationsSummary(timelineItems, selectedDateId)
 
   const updateAvailability = (slot) => {
     const result = availabilityActions[slot.action]?.(selectedDateId, slot.time, dayRequests)

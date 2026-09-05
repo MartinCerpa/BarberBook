@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import RequestCard from '../components/admin/RequestCard'
 import RequestHistoryCard from '../components/admin/RequestHistoryCard'
 import { requestContext } from '../data/requests'
+import { getCurrentPendingRequests } from '../services/bookingInsightsService.js'
 import {
   formatRequestDateId,
   getRequestDateId,
@@ -42,14 +43,7 @@ function RequestsPage({
   }, [initialFocus, onFocusConsumed])
 
   const upcomingRequests = useMemo(
-    () =>
-      sortUpcomingRequests(
-        requests.filter(
-          (request) =>
-            request.status === 'pending' &&
-            !isHistoricalRequest(request, requestContext),
-        ),
-      ),
+    () => getCurrentPendingRequests(requests, requestContext),
     [requests],
   )
 
