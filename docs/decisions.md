@@ -471,3 +471,64 @@ Objetivo:
 Entregar al profesional una primera herramienta para entender cuánto está generando realmente mediante BarberBook, sin convertir todavía la aplicación en un sistema contable completo.
 
 ---
+
+## Preferencias del profesional se implementarán cuando existan configuraciones funcionales suficientes
+
+Fecha:
+Septiembre 2026
+
+Decisión:
+
+BarberBook no tendrá por ahora una sección independiente de Preferencias únicamente para completar el menú de Ajustes.
+
+La sección Preferencias se implementará en una fase posterior, cuando existan configuraciones reales y útiles para el profesional.
+
+### Apariencia
+
+El selector actual de tema claro/oscuro se mantendrá como un control rápido y global de la interfaz.
+
+No formará parte de Preferencias en esta etapa.
+
+Motivo:
+
+El control de apariencia también resulta útil para clientes que utilizan el perfil público y el flujo de reserva, por lo que no debe quedar limitado al panel profesional.
+
+### Notificaciones y comunicación
+
+No se mostrarán preferencias de:
+
+- Notificaciones.
+- WhatsApp.
+- Recordatorios automáticos.
+- Correo electrónico.
+- Push notifications.
+
+hasta que BarberBook tenga implementados los sistemas reales que les den funcionamiento.
+
+No se crearán interruptores o configuraciones que no produzcan un efecto real.
+
+### Preferencias futuras
+
+La futura sección podrá incorporar configuraciones como:
+
+- Vista inicial del panel.
+- Preferencias de comunicación.
+- Canales de notificación.
+- Comportamientos personalizados del panel.
+- Otras opciones de experiencia que surjan durante la beta.
+
+Estas opciones deberán responder a necesidades reales detectadas durante el uso del producto.
+
+### Principios
+
+- No crear configuraciones únicamente para llenar una sección.
+- Toda preferencia visible debe tener un efecto funcional.
+- Las preferencias frecuentes utilizarán guardado automático.
+- La lógica de preferencias deberá mantenerse separada de los componentes visuales y preparada para una futura API.
+- Las decisiones sobre comunicación deberán implementarse cuando exista la infraestructura correspondiente.
+
+Objetivo:
+
+Mantener Ajustes simple durante la beta y evitar ofrecer controles que todavía no tienen una función real.
+
+---
