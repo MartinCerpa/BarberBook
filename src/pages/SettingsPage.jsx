@@ -31,14 +31,6 @@ const functionalSettingsItems = [
   },
 ]
 
-const futureSettingsItems = [
-  {
-    id: 'preferences',
-    title: 'Preferencias',
-    description: 'Personaliza otras opciones de tu cuenta.',
-  },
-]
-
 function SettingsIcon({ section }) {
   const icons = {
     profile: (
@@ -65,14 +57,6 @@ function SettingsIcon({ section }) {
       <>
         <rect x="4" y="5.5" width="16" height="14.5" rx="2" />
         <path d="M8 3.5v4M16 3.5v4M4 10h16M8 14l2.2 2.2L16 13" />
-      </>
-    ),
-    preferences: (
-      <>
-        <path d="M4 7h4M12 7h8M4 12h9M17 12h3M4 17h2M10 17h10" />
-        <circle cx="10" cy="7" r="2" />
-        <circle cx="15" cy="12" r="2" />
-        <circle cx="8" cy="17" r="2" />
       </>
     ),
   }
@@ -708,19 +692,6 @@ function SettingsOverview({ onSelect }) {
             </span>
             <span className="settings-hub__arrow" aria-hidden="true">→</span>
           </button>
-        ))}
-
-        {futureSettingsItems.map((item) => (
-          <article className="settings-hub__option is-future" key={item.id}>
-            <span className="settings-option__icon">
-              <SettingsIcon section={item.id} />
-            </span>
-            <span className="settings-hub__copy">
-              <strong>{item.title}</strong>
-              <small>{item.description}</small>
-            </span>
-            <span className="settings-option__badge">Próximamente</span>
-          </article>
         ))}
       </section>
     </div>
